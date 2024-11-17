@@ -18,10 +18,12 @@
 
 **MysqlのDB**
 ![-3](https://github.com/user-attachments/assets/f9307158-b966-493c-b6a3-2d9d9879217c)
+
 ![24-5](https://github.com/user-attachments/assets/a02a82f8-c918-4541-a5ef-330c89c1ec5d)
 
 【1】年齢30代の抽出結果
 ![24-2](https://github.com/user-attachments/assets/b026af2d-dac3-4437-8290-01bf74e879bc)
+
 【2】「JAVAコース」の絞り込み結果
 ![24](https://github.com/user-attachments/assets/1ef75ec2-d8b0-4af3-82f6-de4c6dc44449)
 
