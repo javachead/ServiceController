@@ -1,61 +1,68 @@
 package raisetech.student.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import raisetech.student.controller.converter.StudentConverter;
-import raisetech.student.data.StudentCourse;
-import raisetech.student.data.Students;
 import raisetech.student.domain.StudentDetail;
-import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentService;
 
-import java.util.ArrayList;
 import java.util.List;
 
-//学生のコース情報を管理するコントローラークラス
-
 @RestController
-public
-class StudentController{
+public class StudentController {
 
-    private final StudentCourseService studentCourseService;
-    private final StudentConverter converter;
+    private final StudentService studentService;
 
     @Autowired
-    public
-    StudentController(StudentCourseService studentCourseService, StudentConverter converter) {
-        this.studentCourseService = studentCourseService;
-        this.converter = converter;
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
     }
 
     /**
-     * 学生コースリストを取得
-     *
-     * @return 全ての学生コース情報
+     * 年齢範囲や年代指定で学生の詳細リストを取得
+     * @param ageRange 年代指定（30S＝30代）
+     * @return 年代で絞り込まれた学生リスト
      */
     @GetMapping("/studentList")
-    public
-    List<StudentDetail> getStudentList() {
+    public ResponseEntity<?> getStudentList(
+            @RequestParam(name = "ageRange", required = false) String ageRange
+    ) {
+        try {
+            //入力値のバリデーション
+            validateAgeRange(ageRange);
 
-        // 全学生データとコースデータを取得
-        List<Students> students = StudentService.getAllStudents();
-        List<StudentCourse> studentCourses = studentCourseService.getAllStudentCourses();
+            // サービス層に年齢範囲を渡す
+            List<StudentDetail> studentDetails = studentService.getStudentDetailsByAgeRange(ageRange);
+            return ResponseEntity.ok(studentDetails);
 
-        // 学生詳細リストを作成
-        List<StudentDetail> studentDetails = new ArrayList<>();
-        for (Students student : students) {
-
-            // 学生詳細データ作成
-            StudentDetail studentDetail = new StudentDetail();
-            studentDetail.setStudent(student);
-
-            // Converterを利用して学生に紐づくコースデータを取得
-            List<StudentCourse> convertStudentCourses = converter.convertStudentCourses(student, studentCourses);
-
-            studentDetail.setStudentCourses(convertStudentCourses);
-            studentDetails.add(studentDetail);
+        } catch (IllegalArgumentException e) {
+            // 無効なリクエストパラメータに対するレスポンス
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid ageRange format: " + e.getMessage());
+        } catch (Exception e) {
+            //  (デバッグ用)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred: " + e.getMessage());
         }
-        return studentDetails;
+    }
+
+    /**
+     * 年齢範囲文字列のバリデーション
+     * @param ageRange 年代指定文字列 (例: 30S)
+     * http://localhost:8080/studentList?ageRange=30S
+     */
+    private void validateAgeRange(String ageRange) {
+        if (ageRange == null || ageRange.isBlank()) {
+            throw new IllegalArgumentException("AgeRange cannot be null, empty, or blank.");
+        }
+
+        if (!ageRange.matches("^[1-9]\\d*S$")) {
+            throw new IllegalArgumentException("AgeRange must be in the format of '30S', '40S', etc.");
+        }
     }
 }

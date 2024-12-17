@@ -1,69 +1,58 @@
 package raisetech.student.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import raisetech.student.Repository.StudentRepository;
+import raisetech.student.controller.converter.StudentConverter;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
-import java.util.List;
-import java.util.stream.Collectors;
+import raisetech.student.domain.StudentDetail;
+import raisetech.student.repository.StudentRepository;
 
-/**
- * 学生情報とコース情報を管理するサービスクラス
- */
+import java.util.List;
+
 @Service
 public class StudentService {
 
-    // リポジトリインスタンス
     private final StudentRepository repository;
+    private final StudentCourseService studentCourseService;
+    private final StudentConverter converter;
 
-    /**
-     * コンストラクタ
-     *
-     * @param repository 注入されるStudentRepositoryのインスタンス
-     */
-    @Autowired
-    public StudentService(StudentRepository repository) {
+    public StudentService(StudentRepository repository, StudentCourseService studentCourseService, StudentConverter converter) {
         this.repository = repository;
+        this.studentCourseService = studentCourseService;
+        this.converter = converter;
     }
 
-    /**
-     * このメソッドはデータベースから全ての学生情報を取得し、その中から年齢が30代の学生のみをフィルタリングして返します。
-     *
-     * @return 年齢が30代の学生リスト
-     */
-    public List<Student> searchStudentList() {
-        // データベースから全学生を取得
-        List<Student> students = repository.search();
-
-        // 年齢が30代の学生のみを抽出して返す
+    public List<StudentDetail> getStudentDetails(int startAge, int endAge) {
+        List<Student> students = searchStudentList(startAge, endAge);
+        List<StudentCourse> studentCourses = studentCourseService.getAllStudentCourses();
         return students.stream()
-                .filter(student -> student.getAge() >= 30 && student.getAge() < 40)
-                .collect(Collectors.toList());
+                .map(student -> createStudentDetail(student, studentCourses))
+                .toList();
     }
 
-    /**
-     * 「Java」コースの学生コース情報リストを取得します。
-     * このメソッドはデータベースから全ての学生コース情報を取得し、その中からコース名が"Java"である情報のみをフィルタリングして返します。
-     *
-     * @return コース名が「Java」である学生コース情報リスト
-     */
-    public List<StudentCourse> searchCourseList() {
-        // データベースから全学生コースを取得
-        List<StudentCourse> courses = repository.searchCourseList();
+    public List<StudentDetail> getStudentDetailsByAgeRange(String ageRange) {
+        // 年齢範囲解析 (30S＝ 30歳~39歳)
+        if (ageRange == null || ageRange.isEmpty()) {
+            throw new IllegalArgumentException("AgeRange cannot be null or empty.");
+        }
 
-        // 「Java」コースの学生コースのみを抽出して返す
-        return courses.stream()
-                .filter(course -> "Java".equalsIgnoreCase(course.getCourseName()))
-                .collect(Collectors.toList());
+        if (ageRange.matches("^[1-9]\\d*S$")) {
+            int startAge = Integer.parseInt(ageRange.substring(0, ageRange.length() - 1)); // 例: "30S" -> 30
+            int endAge = startAge + 9; // 30代 (30-39)
+            return getStudentDetails(startAge, endAge);
+        } else {
+            throw new IllegalArgumentException("Invalid ageRange format. Use formats like '30S', '40S'");
+        }
     }
 
-    /**
-     * StudentRepositoryのゲッター
-     *
-     * @return リポジトリインスタンス
-     */
-    public StudentRepository getRepository() {
-        return repository;
+    private List<Student> searchStudentList(int startAge, int endAge) {
+        return repository.findByAgeBetween(startAge, endAge);
+    }
+
+    private StudentDetail createStudentDetail(Student student, List<StudentCourse> studentCourses) {
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentCourses(converter.convertStudentCourses(student, studentCourses));
+        return detail;
     }
 }
