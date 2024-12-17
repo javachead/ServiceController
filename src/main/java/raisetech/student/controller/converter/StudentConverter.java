@@ -2,7 +2,7 @@ package raisetech.student.controller.converter;
 
 import org.springframework.stereotype.Component;
 import raisetech.student.data.StudentCourse;
-import raisetech.student.data.Students;
+import raisetech.student.data.Student;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
 public
 class StudentConverter{
     public
-    List<StudentCourse> convertStudentCourses(Students student, List<StudentCourse> studentCourses) {
+    List<StudentCourse> convertStudentCourses(Student student, List<StudentCourse> studentCourses) {
         List<StudentCourse> filteredCourses = new ArrayList<>();
         for (StudentCourse studentCourse : studentCourses) {
             if (student.getId().equals(studentCourse.getId())) {
