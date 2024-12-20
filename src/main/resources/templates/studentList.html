@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>受講生情報一覧</title>
+</head>
+<body>
+<h1>受講生情報一覧</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>名前</th>
+        <th>カナ名</th>
+        <th>ニックネーム</th>
+        <th>メールアドレス</th>
+        <th>地域</th>
+        <th>年齢</th>
+        <th>性別</th>
+        <th>備考</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Studentリストを繰り返して表示 -->
+    <tr th:each="studentDetail : ${studentList}">
+        <td th:text="${studentDetail.student.id}"></td>
+        <td th:text="${studentDetail.student.name}"></td>
+        <td th:text="${studentDetail.student.kanaName}"></td>
+        <td th:text="${studentDetail.student.nickName}"></td>
+        <td th:text="${studentDetail.student.email}"></td>
+        <td th:text="${studentDetail.student.area}"></td>
+        <td th:text="${studentDetail.student.age}"></td>
+        <td th:text="${studentDetail.student.sex}"></td>
+        <td th:text="${studentDetail.student.remark}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
