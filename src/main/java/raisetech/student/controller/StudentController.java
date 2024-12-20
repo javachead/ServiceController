@@ -14,18 +14,14 @@ import raisetech.student.service.StudentService;
 import java.util.ArrayList;
 import java.util.List;
 
-//学生のコース情報を管理するコントローラークラス
-
 @Controller
-public
-class StudentController{
+public class StudentController {
 
     private final StudentCourseService studentCourseService;
     private final StudentConverter converter;
 
     @Autowired
-    public
-    StudentController(StudentCourseService studentCourseService, StudentConverter converter) {
+    public StudentController(StudentCourseService studentCourseService, StudentConverter converter) {
         this.studentCourseService = studentCourseService;
         this.converter = converter;
     }
@@ -35,8 +31,7 @@ class StudentController{
      * @return 全ての学生コース情報
      */
     @GetMapping("/studentList")
-    public
-    String getStudentList(Model model) {
+    public String getStudentList(Model model) {
 
         // 全学生データとコースデータを取得
         List<Students> students = StudentService.getAllStudents();
