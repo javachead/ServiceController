@@ -27,45 +27,45 @@ application {
 }
 
 repositories {
-	gradlePluginPortal()
 	mavenCentral()
 	google()
+	gradlePluginPortal()
 }
 
 dependencies {
-	// Spring Boot Core
-	implementation 'org.springframework.boot:spring-boot-starter'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	// Spring Web
+	// Spring Boot関連
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// Spring Data JPA, JDBC, and Validation
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	// Lombok
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+	// データベース関連
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'mysql:mysql-connector-java:8.0.33'
+	runtimeOnly 'com.h2database:h2'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+	// その他のライブラリ
+	implementation 'org.apache.commons:commons-lang3:3.14.0'
+	implementation 'org.codehaus.groovy:groovy-all:3.0.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	// Database Drivers
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	runtimeOnly 'mysql:mysql-connector-java'
-	runtimeOnly 'com.h2database:h2'
-	// MyBatis
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
-	// Apache Commons
-	implementation 'org.apache.commons:commons-lang3:3.14.0'
-	// Testing
+
+	// テスト関連
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.withType(JavaCompile).configureEach {
+	// 開発で使用するJavaバージョン
 	javaCompiler = javaToolchains.compilerFor {
 		languageVersion.set(JavaLanguageVersion.of(17))
 	}
+	options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true'
 }
+
 tasks.withType(Test).configureEach {
 	useJUnitPlatform()
-}
-tasks.withType(JavaCompile).configureEach {
-	options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true'
 }

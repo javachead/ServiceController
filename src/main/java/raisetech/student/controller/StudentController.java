@@ -1,42 +1,57 @@
 package raisetech.student.controller;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import raisetech.student.controller.converter.StudentConverter;
+import raisetech.student.data.StudentCourse;
+import raisetech.student.data.Students;
 import raisetech.student.domain.StudentDetail;
+import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentService;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@RestController
-public class StudentController {
+//学生のコース情報を管理するコントローラークラス
 
-    private final StudentService studentService;
+@Controller
+public
+class StudentController{
+
+    private final StudentCourseService studentCourseService;
+    private final StudentConverter converter;
 
     @Autowired
-    public StudentController(StudentService studentService) {
-        this.studentService = studentService;
+    public
+    StudentController(StudentCourseService studentCourseService, StudentConverter converter) {
+        this.studentCourseService = studentCourseService;
+        this.converter = converter;
     }
 
     /**
-     * 年齢範囲や年代指定で学生の詳細リストを取得
-     * @param ageRange 年代指定（例: 30S）
-     * @return 年代で絞り込まれた学生リスト
+     * 学生コースリストを取得
+     * @return 全ての学生コース情報
      */
     @GetMapping("/studentList")
-    public ResponseEntity<List<StudentDetail>> getStudentList(
-            //hibernate validator（@Valid、@Pattern）を使用
-            @Valid
-            @RequestParam(name = "ageRange", required = false)
-            @Pattern(regexp = "^[1-9]\\d*S$", message = "AgeRange must be in the format of '30S', '40S', etc.")
-            String ageRange
-    ) {
-        // サービス層に年齢範囲を渡す
-        List<StudentDetail> studentDetails = studentService.getStudentDetailsByAgeRange(ageRange);
-        return ResponseEntity.ok(studentDetails);
+    public
+    String getStudentList(Model model) {
+
+        // 全学生データとコースデータを取得
+        List<Students> students = StudentService.getAllStudents();
+        List<StudentCourse> studentCourses = studentCourseService.getAllStudentCourses();
+
+        // 学生詳細リストを作成
+        List<StudentDetail> studentDetails = new ArrayList<>();
+        for (Students student : students) {
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student);
+            List<StudentCourse> convertStudentCourses = converter.convertStudentCourses(student, studentCourses);
+            studentDetail.setStudentCourses(convertStudentCourses);
+            studentDetails.add(studentDetail);
+        }
+        model.addAttribute("studentList", studentDetails);
+        return "studentList";
     }
 }
