@@ -6,12 +6,11 @@ import lombok.Setter;
 import java.util.List;
 
 import raisetech.student.data.StudentCourse;
-import raisetech.student.data.Student;
+import raisetech.student.data.Students;
 
 @Getter
 @Setter
-public
-class StudentDetail{
-    private Student student;
+public class StudentDetail {
+    private Students student;
     private List<StudentCourse> studentCourses;
 }
