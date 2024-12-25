@@ -1,13 +1,18 @@
 package raisetech.student.data;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "student") // 対応するテーブルの名前を指定
-@Data
-public
-class Students{
+//@Dataは保守性が悪いので、以下アノテーションへ変更
+@ToString
+@Getter
+@Setter
+
+public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
