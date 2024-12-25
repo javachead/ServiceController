@@ -1,6 +1,5 @@
 package raisetech.student.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
@@ -12,12 +11,12 @@ public class StudentCourseService {
 
     private final StudentCourseRepository studentCourseRepository;
 
-    @Autowired
     public StudentCourseService(StudentCourseRepository studentCourseRepository) {
         this.studentCourseRepository = studentCourseRepository;
     }
 
     public List<StudentCourse> getAllStudentCourses() {
-        return studentCourseRepository.findAll();
+        // Repository からデータを取得して返す
+        return studentCourseRepository.findAllStudentCourses();
     }
 }
