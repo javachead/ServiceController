@@ -10,5 +10,5 @@ public interface StudentCourseRepository {
 
     // 学生コースデータをすべて取得するSQLクエリ
     @Select("SELECT * FROM studentcourse")
-    List<StudentCourse> findAllStudentCourses();
+    List<StudentCourse> findCoursesByStudentId(int studentId);
 }

@@ -15,8 +15,13 @@ public class StudentCourseService {
         this.studentCourseRepository = studentCourseRepository;
     }
 
-    public List<StudentCourse> getAllStudentCourses() {
-        // Repository からデータを取得して返す
-        return studentCourseRepository.findAllStudentCourses();
+    public List<StudentCourse> getStudentCoursesWithCustomLogic(Long studentId) {
+        // 特定の学生に紐づく全コースを取得
+        return studentCourseRepository.findCoursesByStudentId(Math.toIntExact(studentId));
+    }
+
+    // (今後、日付ロジックを適用する場合に備えたメソッド)
+    public boolean isActiveCourse(StudentCourse course) {
+        return true; // 現時点では無条件で true を返す
     }
 }

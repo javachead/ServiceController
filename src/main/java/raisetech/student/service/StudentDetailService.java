@@ -19,17 +19,20 @@ public class StudentDetailService {
     }
 
     public List<StudentDetail> getStudentDetails() {
+        // 学生を全件取得（nullの場合は空のリストをデフォルトとして使用）
         List<Student> students = Optional.ofNullable(studentService.getAllStudents()).orElseGet(ArrayList::new);
-        List<StudentCourse> studentCourses = Optional.ofNullable(studentCourseService.getAllStudentCourses()).orElseGet(ArrayList::new);
 
-        List<StudentDetail> studentDetails = new ArrayList<>();
-        for (Student student : students) {
-            StudentDetail studentDetail = new StudentDetail();
-            studentDetail.setStudent(student);
+        return students.stream()
+                .map(student -> {
+                    // 各学生のコース情報を取得
+                    List<StudentCourse> studentCourses = studentCourseService.getStudentCoursesWithCustomLogic(student.getId());
 
-            studentDetail.addCourses(studentCourses);
-            studentDetails.add(studentDetail);
-        }
-        return studentDetails;
+                    // 学生詳細情報を作成
+                    StudentDetail studentDetail = new StudentDetail();
+                    studentDetail.setStudent(student);
+                    studentDetail.addCourses(studentCourses); // コース情報をセット
+                    return studentDetail;
+                })
+                .toList(); // 学生詳細情報のリストを返却
     }
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import raisetech.student.data.StudentCourse;
@@ -16,8 +17,6 @@ public class StudentDetail {
     private List<StudentCourse> studentCourses = new ArrayList<>();
 
     public void addCourses(List<StudentCourse> courses) {
-        if (courses != null) {
-            this.studentCourses.addAll(courses);
-        }
+        this.studentCourses.addAll(courses != null ? courses : Collections.emptyList()); // null チェックの簡素化
     }
 }
