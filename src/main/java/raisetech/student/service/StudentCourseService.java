@@ -1,6 +1,5 @@
 package raisetech.student.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
@@ -12,12 +11,17 @@ public class StudentCourseService {
 
     private final StudentCourseRepository studentCourseRepository;
 
-    @Autowired
     public StudentCourseService(StudentCourseRepository studentCourseRepository) {
         this.studentCourseRepository = studentCourseRepository;
     }
 
-    public List<StudentCourse> getAllStudentCourses() {
-        return studentCourseRepository.findAll();
+    public List<StudentCourse> getCoursesByStudentId(Long studentId) {
+        // 特定の学生に紐づく全コースを取得
+        return studentCourseRepository.findCoursesByStudentId(Math.toIntExact(studentId));
+    }
+
+    // (今後、日付ロジックを適用する場合に備えたメソッド)
+    public boolean isActiveCourse(StudentCourse course) {
+        return true; // 現時点では無条件で true を返す
     }
 }
