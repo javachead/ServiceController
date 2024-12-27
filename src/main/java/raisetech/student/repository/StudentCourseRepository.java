@@ -8,7 +8,7 @@ import java.util.List;
 @Mapper
 public interface StudentCourseRepository {
 
-    // 学生コースデータをすべて取得するSQLクエリ
+    // 特定の学生IDに基づいてコースを取得する
     @Select("SELECT * FROM studentcourse")
     List<StudentCourse> findCoursesByStudentId(int studentId);
 }

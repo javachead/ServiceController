@@ -25,7 +25,7 @@ public class StudentDetailService {
         return students.stream()
                 .map(student -> {
                     // 各学生のコース情報を取得
-                    List<StudentCourse> studentCourses = studentCourseService.getStudentCoursesWithCustomLogic(student.getId());
+                    List<StudentCourse> studentCourses = studentCourseService.getCoursesByStudentId(student.getId());
 
                     // 学生詳細情報を作成
                     StudentDetail studentDetail = new StudentDetail();

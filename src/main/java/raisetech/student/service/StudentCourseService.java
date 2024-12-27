@@ -15,7 +15,7 @@ public class StudentCourseService {
         this.studentCourseRepository = studentCourseRepository;
     }
 
-    public List<StudentCourse> getStudentCoursesWithCustomLogic(Long studentId) {
+    public List<StudentCourse> getCoursesByStudentId(Long studentId) {
         // 特定の学生に紐づく全コースを取得
         return studentCourseRepository.findCoursesByStudentId(Math.toIntExact(studentId));
     }
