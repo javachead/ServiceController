@@ -1,23 +1,34 @@
 package raisetech.student.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import raisetech.student.data.StudentCourses;
-import raisetech.student.repository.StudentCoursesMapper;
+import raisetech.student.data.StudentCourse;
+import raisetech.student.repository.StudentCourseRepository;
 
 import java.util.List;
 
 @Service
-@Transactional
 public class StudentCourseService {
 
-    private final StudentCoursesMapper studentCoursesMapper;
+    private final StudentCourseRepository studentCourseRepository;
 
-    public StudentCourseService(StudentCoursesMapper studentCoursesMapper) {
-        this.studentCoursesMapper = studentCoursesMapper;
+    public StudentCourseService(StudentCourseRepository studentCourseRepository) {
+        this.studentCourseRepository = studentCourseRepository;
     }
 
-    public List<StudentCourses> findByStudentId(Long id) { // メソッド名を修正
-        return studentCoursesMapper.findByStudentId(id); // Mapperのメソッド名と一致させる
+    /**
+     * 学生IDに基づくコース情報を取得
+     */
+    public List<StudentCourse> findByStudentId(Long studentId) {
+        return studentCourseRepository.findCoursesByStudentId(studentId);
+    }
+
+    /**
+     * 学生のコース情報を保存
+     */
+    public void saveCourses(List<StudentCourse> courses, Long studentId) {
+        for (StudentCourse course : courses) {
+            course.setStudentId(studentId); // 学生IDをセット
+            studentCourseRepository.insertCourse(course); // リポジトリに挿入
+        }
     }
 }

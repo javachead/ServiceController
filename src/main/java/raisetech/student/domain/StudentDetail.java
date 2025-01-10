@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourses;
+import raisetech.student.data.StudentCourse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +17,19 @@ public class StudentDetail {
     private Student student;
 
     @Valid
-    private List<StudentCourses> studentCourses; //学生が登録しているコース情報
+    private List<StudentCourse> studentCourses; //学生が登録しているコース情報
 
     public StudentDetail() {
         this.studentCourses = new ArrayList<>(); // 初期化
     }
 
-    public StudentDetail(Student student, List<StudentCourses> studentCourses) {
+    public StudentDetail(Student student, List<StudentCourse> studentCourses) {
         this.student = student;
         this.studentCourses = studentCourses != null ? studentCourses : new ArrayList<>();
     }
 
     // course情報を追加するメソッド
-    public void addCourse(StudentCourses course) {
+    public void addCourse(StudentCourse course) {
         if (this.studentCourses == null) {
             this.studentCourses = new ArrayList<>();
         }

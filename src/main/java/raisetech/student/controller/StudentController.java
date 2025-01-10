@@ -7,12 +7,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourses;
+import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
 import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
-
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -37,39 +36,31 @@ public class StudentController {
     // 学生情報一覧を取得して表示
     @GetMapping("/studentList")
     public String getStudentList(Model model) {
-        List<StudentDetail> studentDetails = studentDetailService.findAllStudentDetails();
-
-        // 学生ごとのコース情報を追加
-        studentDetails.forEach(studentDetail -> {
-            Long studentId = studentDetail.getStudent().getId(); // 学生IDを取得
-            List<StudentCourses> courses = studentCourseService.findByStudentId(studentId); // コース情報を取得
-            studentDetail.setStudentCourses(courses); // 学生の詳細にコース情報を設定
-        });
-
-        model.addAttribute("studentList", studentDetails); // 学生リストをモデルに追加
+        List<StudentDetail> studentDetails = studentDetailService.findAllStudentDetails(); // 改善されたサービスを使用
+        model.addAttribute("studentList", studentDetails);
         return "studentList";
     }
 
-   // 新規学生登録画面の表示
+    // 新規学生登録画面の表示
     @GetMapping("/newStudent")
     public String newStudent(Model model) {
         StudentDetail studentDetail = new StudentDetail();
         studentDetail.setStudent(new Student());
 
         // 初期状態で空のコースを1件だけセット
-        studentDetail.addCourse(new StudentCourses());
+        studentDetail.addCourse(new StudentCourse());
         model.addAttribute("studentDetail", studentDetail);
 
         return "registerStudent";
     }
 
-    //指定された学生IDに基づくコース情報を取得
+    // 指定された学生IDに基づくコース情報を取得
     @GetMapping("/{id}")
-    public List<StudentCourses> getCoursesByStudentId(@PathVariable Long id) {
+    public List<StudentCourse> getCoursesByStudentId(@PathVariable Long id) {
         return studentCourseService.findByStudentId(id);
     }
 
-    //新規学生情報の登録処理
+    // 新規学生情報の登録処理
     @PostMapping("/registerStudent")
     public String registerStudent(@ModelAttribute("studentDetail") @Valid StudentDetail studentDetail,
                                   BindingResult result,
@@ -81,9 +72,9 @@ public class StudentController {
 
         try {
             Student student = studentDetail.getStudent();
-            List<StudentCourses> courses = studentDetail.getStudentCourses();
+            List<StudentCourse> courses = studentDetail.getStudentCourses();
 
-            // メソッド名を修正: saveStudentAndCourses を呼び出す
+            // サービス層で学生とコースを保存
             studentService.saveStudentAndCourses(student, courses);
 
             logger.info("学生情報とコース情報を登録しました: {}", student.getName());

@@ -3,9 +3,7 @@ package raisetech.student.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourses;
-import raisetech.student.repository.StudentCoursesMapper;
-import raisetech.student.repository.StudentMapper;
+import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentRepository;
 
 import java.util.List;
@@ -13,23 +11,23 @@ import java.util.List;
 @Service
 public class StudentService {
 
-    private final StudentMapper studentMapper;
-    private final StudentCoursesMapper studentCoursesMapper;
+    private final StudentRepository studentRepository;
+    private final StudentCourseService studentCourseService;
 
-    public StudentService(StudentMapper studentMapper, StudentCoursesMapper studentCoursesMapper) {
-        this.studentMapper = studentMapper;
-        this.studentCoursesMapper = studentCoursesMapper;
+    public StudentService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
+        this.studentRepository = studentRepository;
+        this.studentCourseService = studentCourseService;
     }
 
+    /**
+     * 学生情報と、それに紐づくコース情報の保存
+     */
     @Transactional
-    public void saveStudentAndCourses(Student student, List<StudentCourses> courses) {
-        // 1. 学生情報を登録し自動生成IDを取得
-        studentMapper.insertStudent(student);
+    public void saveStudentAndCourses(Student student, List<StudentCourse> courses) {
+        // 学生情報を保存（IDは自動生成され、エンティティにセットされる）
+        studentRepository.insertStudent(student);
 
-        // 2. 学生に関連づけたコース情報を登録
-        for (StudentCourses course : courses) {
-            course.setStudent(student); // student_idを設定
-            studentCoursesMapper.insert(course);
-        }
+        // 学生IDに関連付けてコース情報を保存
+        studentCourseService.saveCourses(courses, student.getId());
     }
 }
