@@ -1,27 +1,23 @@
 package raisetech.student.service;
 
 import org.springframework.stereotype.Service;
-import raisetech.student.data.StudentCourse;
-import raisetech.student.repository.StudentCourseRepository;
+import org.springframework.transaction.annotation.Transactional;
+import raisetech.student.data.StudentCourses;
+import raisetech.student.repository.StudentCoursesMapper;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class StudentCourseService {
 
-    private final StudentCourseRepository studentCourseRepository;
+    private final StudentCoursesMapper studentCoursesMapper;
 
-    public StudentCourseService(StudentCourseRepository studentCourseRepository) {
-        this.studentCourseRepository = studentCourseRepository;
+    public StudentCourseService(StudentCoursesMapper studentCoursesMapper) {
+        this.studentCoursesMapper = studentCoursesMapper;
     }
 
-    public List<StudentCourse> getStudentCoursesWithCustomLogic(Long studentId) {
-        // 特定の学生に紐づく全コースを取得
-        return studentCourseRepository.findCoursesByStudentId(Math.toIntExact(studentId));
-    }
-
-    // (今後、日付ロジックを適用する場合に備えたメソッド)
-    public boolean isActiveCourse(StudentCourse course) {
-        return true; // 現時点では無条件で true を返す
+    public List<StudentCourses> findByStudentId(Long id) { // メソッド名を修正
+        return studentCoursesMapper.findByStudentId(id); // Mapperのメソッド名と一致させる
     }
 }

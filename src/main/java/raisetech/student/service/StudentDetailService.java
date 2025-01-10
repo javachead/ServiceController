@@ -1,38 +1,53 @@
 package raisetech.student.service;
-
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourse;
+import raisetech.student.data.StudentCourses;
 import raisetech.student.domain.StudentDetail;
-import java.util.ArrayList;
+import raisetech.student.repository.StudentCoursesMapper;
+import raisetech.student.repository.StudentMapper;
+
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional
 public class StudentDetailService {
-    private final StudentService studentService;
-    private final StudentCourseService studentCourseService;
 
-    public StudentDetailService(StudentService studentService, StudentCourseService studentCourseService) {
-        this.studentService = studentService;
-        this.studentCourseService = studentCourseService;
+    private final StudentMapper studentMapper;
+    private final StudentCoursesMapper studentCoursesMapper;
+
+    // コンストラクタでリポジトリ注入
+    public StudentDetailService(StudentMapper studentMapper, StudentCoursesMapper studentCoursesMapper) {
+        this.studentMapper = studentMapper;
+        this.studentCoursesMapper = studentCoursesMapper;
     }
 
-    public List<StudentDetail> getStudentDetails() {
-        // 学生を全件取得（nullの場合は空のリストをデフォルトとして使用）
-        List<Student> students = Optional.ofNullable(studentService.getAllStudents()).orElseGet(ArrayList::new);
+    // 全学生の詳細情報を取得する
+    public List<StudentDetail> findAllStudentDetails() {
+        // 学生情報を全件取得
+        List<Student> students = studentMapper.findAll();
 
+        // 各学生に関連するコースをマッピング
         return students.stream()
                 .map(student -> {
-                    // 各学生のコース情報を取得
-                    List<StudentCourse> studentCourses = studentCourseService.getStudentCoursesWithCustomLogic(student.getId());
-
-                    // 学生詳細情報を作成
-                    StudentDetail studentDetail = new StudentDetail();
-                    studentDetail.setStudent(student);
-                    studentDetail.addCourses(studentCourses); // コース情報をセット
-                    return studentDetail;
+                    List<StudentCourses> studentCourses = studentCoursesMapper.findByStudentId(student.getId());
+                    return new StudentDetail(student, studentCourses); // 学生とそのコース情報を結合
                 })
-                .toList(); // 学生詳細情報のリストを返却
+                .collect(Collectors.toList());
+    }
+
+    public void saveStudentDetail(StudentDetail studentDetail) {
+        // 学生データの登録
+        Student student = studentDetail.getStudent();
+        studentMapper.insertStudent(student);
+
+        if (studentDetail.getStudentCourses() != null) {
+            for (StudentCourses course : studentDetail.getStudentCourses()) {
+                // 関連するコースに学生IDを紐付け
+                course.setStudentId(student.getId());
+                studentCoursesMapper.insert(course);
+            }
+        }
     }
 }

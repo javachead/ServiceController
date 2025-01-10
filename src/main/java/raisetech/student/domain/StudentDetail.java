@@ -1,22 +1,38 @@
 package raisetech.student.domain;
 
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
+import raisetech.student.data.Student;
+import raisetech.student.data.StudentCourses;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import raisetech.student.data.StudentCourse;
-import raisetech.student.data.Student;
-
-@Getter
 @Setter
+@Getter
 public class StudentDetail {
-    private Student student = new Student();
-    private List<StudentCourse> studentCourses = new ArrayList<>();
 
-    public void addCourses(List<StudentCourse> courses) {
-        this.studentCourses.addAll(courses != null ? courses : Collections.emptyList()); // null チェックの簡素化
+    @Valid
+    private Student student;
+
+    @Valid
+    private List<StudentCourses> studentCourses; //学生が登録しているコース情報
+
+    public StudentDetail() {
+        this.studentCourses = new ArrayList<>(); // 初期化
+    }
+
+    public StudentDetail(Student student, List<StudentCourses> studentCourses) {
+        this.student = student;
+        this.studentCourses = studentCourses != null ? studentCourses : new ArrayList<>();
+    }
+
+    // course情報を追加するメソッド
+    public void addCourse(StudentCourses course) {
+        if (this.studentCourses == null) {
+            this.studentCourses = new ArrayList<>();
+        }
+        this.studentCourses.add(course);
     }
 }

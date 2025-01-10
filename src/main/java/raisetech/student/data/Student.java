@@ -1,19 +1,23 @@
 package raisetech.student.data;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Entity
+@Data
+@NoArgsConstructor
 public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String kanaName;
-    private String nickName;
+    private String nickname;
     private String email;
     private String area;
-    private int age;
+    private Integer age;
     private String sex;
     private String remark;
-    private boolean isDeleted;
 }
