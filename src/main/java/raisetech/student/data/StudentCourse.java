@@ -1,21 +1,20 @@
 package raisetech.student.data;
 
-import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import lombok.ToString;
 import java.time.LocalDate;
 
-@Entity
 @Getter
 @Setter
+@ToString
+@NoArgsConstructor
+
 public class StudentCourse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String studentCourse; // camelCaseにリネーム
-    private String studentId;
+    private Long studentId;
     private String courseName;
     private LocalDate courseStartAt;
     private LocalDate courseEndAt;

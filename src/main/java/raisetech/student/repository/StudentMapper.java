@@ -2,22 +2,23 @@ package raisetech.student.repository;
 
 import org.apache.ibatis.annotations.*;
 import raisetech.student.data.Student;
+
 import java.util.List;
 
 @Mapper
-public interface StudentRepository {
+public interface StudentMapper {
 
-    // 単一学生を取得
+    // 学生1人を取得する
     @Select("SELECT * FROM student WHERE id = #{id}")
-    Student findById(@Param("id") Long id);
+    Student findById(Long id);
 
-    // 全学生を取得
+    // 全ての学生を取得する
     @Select("SELECT * FROM student")
-    List<Student> findAllStudents();
+    List<Student> findAll();
 
-    // 新規学生登録
+    // 学生を新規登録する（IDを自動生成して取得）
     @Insert("INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark) " +
             "VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
+    @Options(useGeneratedKeys = true, keyProperty = "id") // 自動生成されたIDを取得
     void insertStudent(Student student);
 }

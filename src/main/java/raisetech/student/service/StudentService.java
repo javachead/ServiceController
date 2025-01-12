@@ -1,24 +1,33 @@
 package raisetech.student.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
+import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class StudentService {
-    private final StudentRepository studentRepository;
 
-    public StudentService(StudentRepository studentRepository) {
+    private final StudentRepository studentRepository;
+    private final StudentCourseService studentCourseService;
+
+    public StudentService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
         this.studentRepository = studentRepository;
+        this.studentCourseService = studentCourseService;
     }
 
-    public List<Student> getAllStudents() {
-        // studentRepositoryがnullを返す場合に備えてOptionalでラップ
-        return Optional.ofNullable(studentRepository)
-                .map(StudentRepository::findAll)
-                .orElseThrow(() -> new IllegalStateException("StudentRepository isn’t available"));
+    /**
+     * 学生情報と、それに紐づくコース情報の保存
+     */
+    @Transactional
+    public void saveStudentAndCourses(Student student, List<StudentCourse> courses) {
+        // 学生情報を保存（IDは自動生成され、エンティティにセットされる）
+        studentRepository.insertStudent(student);
+
+        // 学生IDに関連付けてコース情報を保存
+        studentCourseService.saveCourses(courses, student.getId());
     }
 }
