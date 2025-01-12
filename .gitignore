@@ -9,7 +9,7 @@ build/
 *.jar
 *.war
 
-!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jarApplication
 !**/src/main/**/build/
 !**/src/test/**/build/
 
@@ -43,3 +43,6 @@ bin/
 
 ### VS Code ###
 .vscode/
+
+### ログファイル ###
+/logs
