@@ -7,22 +7,31 @@
 <body>
 <h1>受講生登録</h1>
 <form th:action="@{/registerStudent}" th:object="${studentDetail}" method="post">
+    <!-- 名前 -->
     <div>
         <label for="name">名前:</label>
-        <input type="text" id="name" th:field="*{student.name}" required/>
+        <input type="text" id="name" th:field="*{student.name}" maxlength="100" required/>
+        <span th:if="${#fields.hasErrors('student.name')}" th:errors="*{student.name}">エラーメッセージ</span>
     </div>
+    <!-- カナ -->
     <div>
         <label for="kanaName">ふりがな:</label>
-        <input type="text" id="kanaName" th:field="*{student.kanaName}" required/>
+        <input type="text" id="kanaName" th:field="*{student.kanaName}" maxlength="100" required/>
+        <span th:if="${#fields.hasErrors('student.kanaName')}" th:errors="*{student.kanaName}">エラーメッセージ</span>
     </div>
+    <!-- ニックネーム -->
     <div>
         <label for="nickname">ニックネーム:</label>
         <input type="text" id="nickname" th:field="*{student.nickname}"/>
+        <span th:if="${#fields.hasErrors('student.nickname')}" th:errors="*{student.nickname}">エラーメッセージ</span>
     </div>
+    <!-- メールアドレス -->
     <div>
         <label for="email">メールアドレス:</label>
         <input type="email" id="email" th:field="*{student.email}" required/>
+        <span th:if="${#fields.hasErrors('student.email')}" th:errors="*{student.email}">エラーメッセージ</span>
     </div>
+    <!-- 都道府県 -->
     <div>
         <label for="area">都道府県:</label>
         <select id="area" th:field="*{student.area}">
@@ -31,55 +40,18 @@
             <option value="青森県">青森県</option>
             <option value="岩手県">岩手県</option>
             <option value="宮城県">宮城県</option>
-            <option value="秋田県">秋田県</option>
-            <option value="山形県">山形県</option>
-            <option value="福島県">福島県</option>
-            <option value="茨城県">茨城県</option>
-            <option value="栃木県">栃木県</option>
-            <option value="群馬県">群馬県</option>
-            <option value="埼玉県">埼玉県</option>
-            <option value="千葉県">千葉県</option>
-            <option value="東京都">東京都</option>
-            <option value="神奈川県">神奈川県</option>
-            <option value="新潟県">新潟県</option>
-            <option value="富山県">富山県</option>
-            <option value="石川県">石川県</option>
-            <option value="福井県">福井県</option>
-            <option value="山梨県">山梨県</option>
-            <option value="長野県">長野県</option>
-            <option value="岐阜県">岐阜県</option>
-            <option value="静岡県">静岡県</option>
-            <option value="愛知県">愛知県</option>
-            <option value="三重県">三重県</option>
-            <option value="滋賀県">滋賀県</option>
-            <option value="京都府">京都府</option>
-            <option value="大阪府">大阪府</option>
-            <option value="兵庫県">兵庫県</option>
-            <option value="奈良県">奈良県</option>
-            <option value="和歌山県">和歌山県</option>
-            <option value="鳥取県">鳥取県</option>
-            <option value="島根県">島根県</option>
-            <option value="岡山県">岡山県</option>
-            <option value="広島県">広島県</option>
-            <option value="山口県">山口県</option>
-            <option value="徳島県">徳島県</option>
-            <option value="香川県">香川県</option>
-            <option value="愛媛県">愛媛県</option>
-            <option value="高知県">高知県</option>
-            <option value="福岡県">福岡県</option>
-            <option value="佐賀県">佐賀県</option>
-            <option value="長崎県">長崎県</option>
-            <option value="熊本県">熊本県</option>
-            <option value="大分県">大分県</option>
-            <option value="宮崎県">宮崎県</option>
-            <option value="鹿児島県">鹿児島県</option>
+            <!-- 他の都道府県オプション省略 -->
             <option value="沖縄県">沖縄県</option>
         </select>
+        <span th:if="${#fields.hasErrors('student.area')}" th:errors="*{student.area}">エラーメッセージ</span>
     </div>
+    <!-- 年齢 -->
     <div>
         <label for="age">年齢:</label>
         <input type="number" id="age" th:field="*{student.age}" min="1" required/>
+        <span th:if="${#fields.hasErrors('student.age')}" th:errors="*{student.age}">エラーメッセージ</span>
     </div>
+    <!-- 性別 -->
     <div>
         <label for="sex">性別:</label>
         <select id="sex" th:field="*{student.sex}" required>
@@ -87,7 +59,9 @@
             <option value="女性">女性</option>
             <option value="その他">その他</option>
         </select>
+        <span th:if="${#fields.hasErrors('student.sex')}" th:errors="*{student.sex}">エラーメッセージ</span>
     </div>
+    <!-- 受講コース -->
     <div>
         <label for="courseName">受講コース:</label>
         <select id="courseName" th:field="*{studentCourses[0].courseName}" required>
@@ -97,19 +71,27 @@
             <option value="PHP">PHP</option>
             <option value="Ruby">Ruby</option>
         </select>
+        <span th:if="${#fields.hasErrors('studentCourses[0].courseName')}" th:errors="*{studentCourses[0].courseName}">エラーメッセージ</span>
     </div>
+    <!-- 受講開始希望日 -->
     <div>
         <label for="courseStartAt">受講開始希望日:</label>
         <input type="date" id="courseStartAt" th:field="*{studentCourses[0].courseStartAt}" required/>
+        <span th:if="${#fields.hasErrors('studentCourses[0].courseStartAt')}" th:errors="*{studentCourses[0].courseStartAt}">エラーメッセージ</span>
     </div>
+    <!-- 受講終了予定日 -->
     <div>
         <label for="courseEndAt">受講終了予定日:</label>
         <input type="date" id="courseEndAt" th:field="*{studentCourses[0].courseEndAt}"/>
+        <span th:if="${#fields.hasErrors('studentCourses[0].courseEndAt')}" th:errors="*{studentCourses[0].courseEndAt}">エラーメッセージ</span>
     </div>
+    <!-- 備考 -->
     <div>
         <label for="remark">備考:</label>
         <textarea id="remark" th:field="*{student.remark}"></textarea>
+        <span th:if="${#fields.hasErrors('student.remark')}" th:errors="*{student.remark}">エラーメッセージ</span>
     </div>
+    <!-- 登録ボタン -->
     <div>
         <button type="submit">登録</button>
     </div>

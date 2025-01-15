@@ -26,6 +26,10 @@ public class StudentDetail {
     public StudentDetail(Student student, List<StudentCourse> studentCourses) {
         this.student = student;
         this.studentCourses = studentCourses != null ? studentCourses : new ArrayList<>();
+
+    }
+
+    public StudentDetail(Student student) {
     }
 
     // course情報を追加するメソッド

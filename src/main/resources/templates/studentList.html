@@ -2,15 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>受講生情報一覧</title>
+    <title>受講生一覧</title>
 </head>
 <body>
-<h1>受講生情報一覧</h1>
+<h1>受講生一覧</h1>
 <table border="1">
     <thead>
     <tr>
         <th>ID</th>
-        <th>名前</th>
+        <th>名前（リンク）</th>
         <th>カナ名</th>
         <th>ニックネーム</th>
         <th>メールアドレス</th>
@@ -25,7 +25,13 @@
     <!-- Studentリストを繰り返して表示 -->
     <tr th:each="studentDetail : ${studentList}">
         <td th:text="${studentDetail.student.id}"></td>
-        <td th:text="${studentDetail.student.name}"></td>
+        <!-- 名前をリンクとして表示 -->
+        <td>
+            <a th:href="@{/updateStudentDetail(id=${studentDetail.student.id})}"
+               th:text="${studentDetail.student.name}">
+                学生名
+            </a>
+        </td>
         <td th:text="${studentDetail.student.kanaName}"></td>
         <td th:text="${studentDetail.student.nickname}"></td>
         <td th:text="${studentDetail.student.email}"></td>

@@ -1,9 +1,12 @@
 package raisetech.student.repository;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
 import raisetech.student.data.StudentCourse;
 
 import java.util.List;
@@ -11,12 +14,24 @@ import java.util.List;
 @Mapper
 public interface StudentCourseRepository {
 
-    // 特定の学生IDに関連するコースを取得する
     @Select("SELECT * FROM student_courses WHERE student_id = #{studentId}")
-    List<StudentCourse> findCoursesByStudentId(@Param("studentId") Long studentId);
+    List<StudentCourse> findByStudentId(@Param("studentId") Long studentId);
 
-    // 新しいコースを挿入する (学生IDを含む)
     @Insert("INSERT INTO student_courses (course_name, course_start_at, course_end_at, student_id) " +
             "VALUES (#{courseName}, #{courseStartAt}, #{courseEndAt}, #{studentId})")
-    void insertCourse(StudentCourse course);
+    int insertCourse(StudentCourse course);
+
+    @Update("UPDATE student_courses SET course_name = #{courseName}, course_start_at = #{courseStartAt}, course_end_at = #{courseEndAt} WHERE id = #{id}")
+    int updateCourse(StudentCourse course);
+
+    @Update("UPDATE student_courses " +
+            "SET course_name = #{courseName}, course_start_at = #{courseStartAt}, course_end_at = #{courseEndAt} " +
+            "WHERE student_id = #{studentId}")
+    void updateCoursesByStudentId(@Param("studentId") Long studentId,
+                                  @Param("courseName") String courseName,
+                                  @Param("courseStartAt") String courseStartAt,
+                                  @Param("courseEndAt") String courseEndAt);
+
+    @Delete("DELETE FROM student_courses WHERE id = #{id}")
+    int deleteCourse(@Param("id") Long id);
 }
