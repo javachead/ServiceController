@@ -19,10 +19,10 @@ public interface StudentCourseRepository {
 
     @Insert("INSERT INTO student_courses (course_name, course_start_at, course_end_at, student_id) " +
             "VALUES (#{courseName}, #{courseStartAt}, #{courseEndAt}, #{studentId})")
-    int insertCourse(StudentCourse course);
+    void insertCourse(StudentCourse course);
 
     @Update("UPDATE student_courses SET course_name = #{courseName}, course_start_at = #{courseStartAt}, course_end_at = #{courseEndAt} WHERE id = #{id}")
-    int updateCourse(StudentCourse course);
+    void updateCourse(StudentCourse course);
 
     @Update("UPDATE student_courses " +
             "SET course_name = #{courseName}, course_start_at = #{courseStartAt}, course_end_at = #{courseEndAt} " +
@@ -33,5 +33,5 @@ public interface StudentCourseRepository {
                                   @Param("courseEndAt") String courseEndAt);
 
     @Delete("DELETE FROM student_courses WHERE id = #{id}")
-    int deleteCourse(@Param("id") Long id);
+    void deleteCourse(@Param("id") Long id);
 }

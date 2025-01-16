@@ -17,127 +17,93 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final StudentCourseService studentCourseService;
 
-    // コンストラクタで依存性注入を一元化
     public StudentService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
         this.studentRepository = studentRepository;
         this.studentCourseService = studentCourseService;
     }
 
-    /**
-     * 学生データとコース情報を保存
-     */
     @Transactional
-    public int saveStudentAndCourses(@Valid Student student, List<StudentCourse> courses) {
-        log.info("saveStudentAndCourses メソッド開始。学生ID: {}, 学生データ: {}", student.getId(), student);
-
-        int rowsUpdated = 0;
+    public void saveStudentAndCourses(@Valid Student student, List<StudentCourse> courses) {
+        log.info("学生とコースを保存します。学生ID={}, 学生データ={}", student.getId(), student);
 
         if (student.getId() == null) {
-            log.info("新規の学生を作成します。データ: {}", student);
+            log.info("新規の学生を登録: {}", student);
             studentRepository.insertStudent(student);
-            rowsUpdated = 1;
         } else {
-            log.info("既存の学生情報を更新します。学生ID: {}", student.getId());
-
-            // この部分で実行されているか確認
-            rowsUpdated = studentRepository.updateStudentDetails(student);
-
-            // クエリ呼び出し後にログを追加
-            log.info("Update クエリが実行されました。更新件数: {}, 学生ID: {}", rowsUpdated, student.getId());
+            log.info("学生ID={} の情報を更新", student.getId());
+            updateStudentDetails(student.getId(), student);
         }
 
-        log.info("学生のコースを保存します。学生ID: {}", student.getId());
-        studentCourseService.saveCourses(courses, Long.valueOf(student.getId()));
-
-        log.info("saveStudentAndCourses メソッド終了。");
-        return rowsUpdated;
+        studentCourseService.saveCourses(courses, student.getId());
     }
 
     @Transactional
-    public void updateStudentById(Long id, @Valid Student student) {
-        log.info("updateStudentByIdメソッドが呼び出されました。更新対象ID: {}, 更新データ: {}", id, student);
+    public void updateStudentDetails(Long id, @Valid Student updatedStudent) {
+        log.info("学生ID={} の情報を更新します。更新データ: {}", id, updatedStudent);
 
-        // 学生データの検証
-        validateStudent(student);
+        Student existingStudent = studentRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("指定された学生IDが見つかりません: ID=" + id)
+        );
 
-        try {
-            log.info("SQL 実行開始: 更新対象の学生ID: {}", id);
-            int rowsUpdated = studentRepository.updateStudentDetails(student); // 更新を実行
-            logResult(rowsUpdated, id);
-        } catch (Exception e) {
-            log.error("学生情報の更新に失敗しました。ID: {}", id, e);
-            throw new RuntimeException("学生情報の更新中にエラーが発生しました: " + e.getMessage(), e);
-        }
+        validateName(updatedStudent.getName());
+        validateEmail(updatedStudent.getEmail());
 
-        log.info("updateStudentByIdメソッドが完了しました。更新対象ID: {}", id);
+        existingStudent.setName(updatedStudent.getName());
+        existingStudent.setKanaName(updatedStudent.getKanaName());
+        existingStudent.setEmail(updatedStudent.getEmail());
+        studentRepository.updateStudentDetails(existingStudent);
+
+        log.info("学生ID={} の情報を更新しました。更新内容: {}", id, existingStudent);
     }
 
     public Student getStudentById(Long id) {
-        log.info("getStudentByIdメソッドが呼び出されました。取得対象の学生ID: {}", id);
-
-        Student student = studentRepository.findById(id).orElseThrow(() -> {
-            log.warn("指定されたIDの学生情報が見つかりません。ID: {}", id);
-            return new RuntimeException("学生情報が見つかりません。ID: " + id);
-        });
-
-        log.info("学生情報が見つかりました。学生ID: {}, 学生データ: {}", id, student);
-        return student;
-    }
-
-    @Transactional
-    public void deleteStudentById(Long id) {
-        log.info("deleteStudentByIdメソッドが呼び出されました。削除対象の学生ID: {}", id);
-
-        studentRepository.deleteById(id);
-
-        log.info("学生情報が正常に削除されました。学生ID: {}", id);
+        log.info("指定されたIDで学生を取得します: ID={}", id);
+        return studentRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("学生が見つかりません: ID=" + id)
+        );
     }
 
     public List<Student> getAllStudents() {
-        log.info("getAllStudentsメソッドが呼び出されました。すべての学生情報を取得します。");
-
+        log.info("すべての学生情報を取得します");
         List<Student> students = studentRepository.findAllStudents();
-
-        log.info("すべての学生情報を取得しました。取得件数: {}", students.size());
+        log.info("取得件数: {}", students.size());
         return students;
     }
 
     @Transactional
+    public void deleteStudentById(Long id) {
+        log.info("学生ID={} を削除します", id);
+        studentRepository.deleteById(id);
+        log.info("学生ID={} を削除しました", id);
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            log.error("学生名が無効です: {}", name);
+            throw new IllegalArgumentException("学生名は必須です");
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            log.error("メールアドレスが無効です: {}", email);
+            throw new IllegalArgumentException("メールアドレスは必須です");
+        }
+    }
+
+    @Transactional
     public void updateStudent(@Valid Student student) {
-        log.info("updateStudentメソッドが呼び出されました。更新データ: {}", student);
+        log.info("updateStudentメソッドを実行します。ID={}, データ={}", student.getId(), student);
 
-        validateStudent(student);
-
-        try {
-            log.info("SQL 実行: 更新する学生ID: {}", student.getId());
-            int rowsUpdated = studentRepository.updateStudentDetails(student); // 更新を実行
-            logResult(rowsUpdated, Long.valueOf(student.getId()));
-        } catch (Exception e) {
-            log.error("学生データの更新に失敗しました。学生ID: {}", student.getId(), e);
-            throw new RuntimeException("学生データの更新中にエラーが発生しました: " + e.getMessage(), e);
+        // 学生IDがnullの場合は例外をスロー
+        if (student.getId() == null) {
+            log.error("学生情報の更新にはIDが必要です。");
+            throw new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
         }
 
-        log.info("updateStudentメソッドが正常に完了しました。学生ID: {}", student.getId());
-    }
+        // 既存の`updateStudentDetails`メソッドを再利用
+        updateStudentDetails(student.getId(), student);
 
-    // 学生情報の検証メソッド
-    private void validateStudent(Student student) {
-        log.debug("validateStudentメソッドが呼び出されました。検証対象: {}", student);
-
-        if (student.getName() == null || student.getName().isEmpty()) {
-            log.error("検証エラー: 学生の名前が空または null です。");
-            throw new IllegalArgumentException("学生の名前は必須です。");
-        }
-
-        log.debug("学生データの検証が正常に完了しました。検証対象: {}", student);
-    }
-
-    // 更新結果のログ出力
-    private void logResult(int rowsUpdated, Long id) {
-        if (rowsUpdated > 0) {
-            log.info("学生データが更新されました。ID: {}, 更新件数: {}", id, rowsUpdated);
-        } else {
-            log.warn("学生データは更新されませんでした。ID: {}", id);
-        }
+        log.info("学生情報が正常に更新されました。ID={}", student.getId());
     }
 }
