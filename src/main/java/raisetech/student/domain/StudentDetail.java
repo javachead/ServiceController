@@ -1,5 +1,6 @@
 package raisetech.student.domain;
 
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
 import raisetech.student.data.Student;
@@ -12,8 +13,10 @@ import java.util.List;
 @Getter
 public class StudentDetail {
 
+    @Valid
     private Student student;
 
+    @Valid
     private List<StudentCourse> studentCourses; //学生が登録しているコース情報
 
     public StudentDetail() {

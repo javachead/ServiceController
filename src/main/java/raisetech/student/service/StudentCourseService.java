@@ -21,7 +21,7 @@ public class StudentCourseService {
     }
 
     //学生IDに基づくコース情報を取得
-    public List<StudentCourse> findByStudentId(Long studentId) {
+    public List<StudentCourse> updateByStudentId(Long studentId) {
         log.info("学生ID {} に基づいてコース情報を取得します。", studentId);
         List<StudentCourse> courses = studentCourseRepository.findByStudentId(studentId);
         log.info("コース件数: {}", courses.size());
