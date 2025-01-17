@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>エラーが発生しました</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #d32f2f;
+        }
+        p {
+            color: #555;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>エラーが発生しました</h1>
+    <p>
+        サーバーにリクエストを処理中にエラーが発生しました。申し訳ございません。
+    </p>
+    <p>
+        詳細：<span th:text="${errorMessage}">問題が発生しました。</span>
+    </p>
+    <a href="/" class="back-link">ホームに戻る</a>
+</div>
+</body>
+</html>
