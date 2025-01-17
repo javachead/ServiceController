@@ -35,7 +35,7 @@ public class StudentDetailService {
             studentDetail.setStudent(student);
 
             // 学生に紐づくコース情報を取得し、設定
-            List<StudentCourse> courses = studentCourseService.findByStudentId(Long.valueOf(student.getId()));
+            List<StudentCourse> courses = studentCourseService.updateByStudentId(Long.valueOf(student.getId()));
             studentDetail.setStudentCourses(courses);
 
             // 学生の詳細情報をリストに追加
