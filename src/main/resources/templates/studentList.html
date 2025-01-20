@@ -19,7 +19,6 @@
         <th>性別</th>
         <th>備考</th>
         <th>コースリスト</th>
-        <th>キャンセル</th>
     </tr>
     </thead>
     <tbody>
@@ -48,12 +47,6 @@
                     コース名
                 </li>
             </ul>
-        </td>
-        <td>
-            <!--/*@thymesVar id="isDeleted" type=""*/-->
-            <label>
-                <input type="checkbox" th:checked="${studentDetail.student.isDeleted}"/>
-            </label>
         </td>
     </tr>
     </tbody>

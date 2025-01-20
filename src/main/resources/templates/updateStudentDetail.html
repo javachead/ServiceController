@@ -98,11 +98,6 @@
     <textarea id="remark" th:field="*{remark}"></textarea>
   </div>
   <div>
-    <label for="isDeleted">キャンセル:</label>
-    <input type="hidden" name="student.isDeleted" value="false"/>
-    <input type="checkbox" id="isDeleted" th:field="*{isDeleted}" />
-  </div>
-  <div>
     <button type="submit">登録内容を変更する</button>
   </div>
 </form>
@@ -113,5 +108,6 @@
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
   <button type="submit" onclick="return confirm('このアカウントを削除しますか？');">このアカウント削除する</button>
 </form>
+
 </body>
 </html>
