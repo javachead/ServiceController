@@ -56,7 +56,7 @@ public class StudentDetailService {
         studentRepository.updateStudentDetails(student);
 
         // 紐づくコース情報を取得または更新
-        List<StudentCourse> updatedCourses = studentCourseService.updateByStudentId(student.getId()); // 修正済み
+        List<StudentCourse> updatedCourses = studentCourseService.updateByStudentId(Math.toIntExact(student.getId())); // 修正済み
 
         // 学生詳細情報を構築
         StudentDetail studentDetail = new StudentDetail();

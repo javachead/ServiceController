@@ -91,6 +91,11 @@
         <textarea id="remark" th:field="*{student.remark}"></textarea>
         <span th:if="${#fields.hasErrors('student.remark')}" th:errors="*{student.remark}">エラーメッセージ</span>
     </div>
+    <div>
+        <label for="isDeleted">キャンセル:</label>
+        <!-- チェックボックスが送信されるか確認 (isDeletedフィールドにマッピング) -->
+        <input type="checkbox" id="isDeleted" th:field="*{student.isDeleted}">
+    </div>
     <!-- 登録ボタン -->
     <div>
         <button type="submit">登録</button>

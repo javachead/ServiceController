@@ -31,7 +31,7 @@ public class ApiController {
         if (!id.equals(student.getId())) {
             throw new IllegalArgumentException("IDが一致しません");
         }
-        studentService.updateStudent(student); // Serviceに処理を委譲
+        studentService.updateStudentDetails(student); // Serviceに処理を委譲
         return ResponseEntity.ok("学生情報を更新しました");
     }
 }
