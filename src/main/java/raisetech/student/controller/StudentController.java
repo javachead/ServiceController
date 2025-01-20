@@ -49,6 +49,7 @@ public class StudentController {
         studentDetail.addCourse(new StudentCourse());
         model.addAttribute("studentDetail", studentDetail);
 
+        logger.debug("新規学生登録画面を表示しました");
         return "registerStudent";
     }
 
@@ -61,13 +62,23 @@ public class StudentController {
             return "registerStudent";
         }
 
-        // 学生情報とコース情報を保存
+        // ログ出力: 受け取った`studentDetail`の内容を確認
+        logger.debug("受け取った学生登録データ: 学生情報={}, コース情報={}",
+                studentDetail.getStudent(),
+                studentDetail.getStudentCourses());
+
+        // デフォルト値補完
         Student student = studentDetail.getStudent();
+        if (student.getIsDeleted() == null) {
+            student.setIsDeleted(false);
+            logger.debug("学生データのデフォルト値を設定: IsDeleted=false");
+        }
+
+        // 学生情報とコース情報を保存
         List<StudentCourse> courses = studentDetail.getStudentCourses();
         studentService.saveStudentAndCourses(student, courses);
 
-        logger.info("学生情報とコースを登録しました: {} ", student.getName());
-
+        logger.info("学生情報を登録しました: {}", student.getName());
         return "redirect:/studentList";
     }
 
@@ -77,6 +88,9 @@ public class StudentController {
     public String getStudentList(Model model) {
         // 学生詳細情報を取得
         List<StudentDetail> studentDetails = studentDetailService.findAllStudentDetails();
+
+        // ログ出力: 取得した学生詳細情報を確認
+        logger.debug("取得した学生詳細情報: {}", studentDetails);
 
         // Nullチェックしてからモデルへ追加
         if (studentDetails != null && !studentDetails.isEmpty()) {
@@ -92,11 +106,13 @@ public class StudentController {
 
     // ---------------- 詳細表示と更新確認 ----------------
 
-    // GET: 更新フォームを取得するエンドポイント
     @GetMapping("/updateStudentDetail")
     public String getUpdateStudentForm(@RequestParam("id") Long id, Model model) {
         // 指定された学生IDの情報を取得
         Student student = studentService.getStudentById(id);
+
+        // 取得した学生情報をログ出力
+        logger.debug("取得した学生情報: ID={}, データ={}", id, student);
 
         // 学生が見つからない場合の処理
         if (student == null) {
@@ -121,9 +137,12 @@ public class StudentController {
             return "updateStudentDetail";
         }
 
+        // ログ出力: 更新対象の学生情報
+        logger.debug("更新対象の学生情報: {}", student);
+
         // 学生情報を更新
-        studentService.updateStudent(student);
-        logger.info("学生情報を更新しました。学生: {}", student.getId());
+        studentService.updateStudentDetails(student);
+        logger.info("学生情報を更新しました。ID: {}, 名前: {}", student.getId(), student.getName());
 
         // 更新完了後、学生リストページへリダイレクト
         return "redirect:/studentList";
@@ -150,9 +169,12 @@ public class StudentController {
             return "updateStudentDetail";
         }
 
+        // ログ出力: 更新対象の詳細情報を確認
+        logger.debug("更新対象の学生情報: {}", student);
+
         // 学生情報をサービス層で更新
-        studentService.updateStudent(student);
-        logger.info("学生情報を更新しました。ID: {}", student.getId());
+        studentService.updateStudentDetails(student);
+        logger.info("学生情報を更新しました。ID: {}, 名前: {}", student.getId(), student.getName());
 
         // 正常終了後、学生一覧画面へリダイレクト
         return "redirect:/studentList";

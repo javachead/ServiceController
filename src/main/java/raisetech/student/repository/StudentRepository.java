@@ -19,8 +19,8 @@ public interface StudentRepository {
 
     // --------------------- 学生情報を追加 ---------------------
 
-    @Insert("INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark) " +
-            "VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark})")
+    @Insert("INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted) " +
+            "VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{isDeleted})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertStudent(Student student);
 
@@ -34,7 +34,8 @@ public interface StudentRepository {
             "area = #{area}, " +
             "age = #{age}, " +
             "sex = #{sex}, " +
-            "remark = #{remark} " +
+            "remark = #{remark}, " +
+            "is_deleted = #{isDeleted} " +
             "WHERE id = #{id}")
     void updateStudentDetails(Student student);
 
