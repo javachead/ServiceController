@@ -14,6 +14,7 @@ import java.util.List;
 @Slf4j
 public class StudentService {
 
+
     private final StudentRepository studentRepository;
     private final StudentCourseService studentCourseService;
 
@@ -50,40 +51,23 @@ public class StudentService {
                 new IllegalArgumentException("指定された学生IDが見つかりません: ID=" + student.getId())
         );
 
-        // 各フィールドに対して更新処理を行う
         validateName(student.getName());
         validateEmail(student.getEmail());
 
         existingStudent.setName(student.getName());
         existingStudent.setKanaName(student.getKanaName());
-        existingStudent.setNickname(student.getNickname()); // ← ニックネームを追加
+        existingStudent.setNickname(student.getNickname());
         existingStudent.setEmail(student.getEmail());
         existingStudent.setArea(student.getArea());
         existingStudent.setAge(student.getAge());
         existingStudent.setSex(student.getSex());
-        existingStudent.setIsDeleted(student.getIsDeleted());
 
-        studentRepository.updateStudentDetails(existingStudent); // リポジトリを介してDB更新
+        // boolean型に基づく修正
+        existingStudent.setDeleted(student.isDeleted());
+
+        studentRepository.updateStudentDetails(existingStudent);
 
         log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), existingStudent);
-    }
-
-    public Student getStudentById(Long id) {
-        log.info("指定されたIDで学生を取得します: ID={}", id);
-
-        // 削除済みデータも含めて取得
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("学生が見つかりません: ID=" + id)
-                );
-
-        // ログ: 削除済みデータである場合の情報
-        if (student.getIsDeleted()) {
-            log.warn("削除済みの学生データを取得しました。ID={}, isDeleted={}", student.getId(), student.getIsDeleted());
-        } else {
-            log.info("取得した学生データ: ID={}, isDeleted={}", student.getId(), student.getIsDeleted());
-        }
-        return student;
     }
 
     public List<Student> getAllStudents() {
@@ -92,7 +76,7 @@ public class StudentService {
         // データが isDeleted=false のものだけ取得
         List<Student> students = studentRepository.findAllStudents()
                 .stream()
-                .filter(student -> !student.getIsDeleted())
+                .filter(student -> !student.isDeleted())
                 .toList();
 
         log.info("取得件数: {}", students.size());
@@ -120,4 +104,19 @@ public class StudentService {
         }
     }
 
+    public Student getStudentById(Long id) {
+        log.info("学生ID={} の情報を取得します", id);
+
+        // リポジトリから学生を取得
+        Student student = studentRepository.findById(id).orElse(null);
+
+        // データが見つからない場合の処理
+        if (student == null || student.isDeleted()) {
+            log.warn("指定されたIDの学生が見つかりません。または削除されています。ID: {}", id);
+            throw new IllegalArgumentException("指定されたIDの学生が見つかりません: ID=" + id);
+        }
+
+        log.info("学生情報が見つかりました: ID={}, データ={}", id, student);
+        return student;
+    }
 }

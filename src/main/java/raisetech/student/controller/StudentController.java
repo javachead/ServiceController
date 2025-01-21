@@ -69,8 +69,8 @@ public class StudentController {
 
         // デフォルト値補完
         Student student = studentDetail.getStudent();
-        if (student.getIsDeleted() == null) {
-            student.setIsDeleted(false);
+        if (!student.isDeleted()) {
+            student.setDeleted(false);
             logger.debug("学生データのデフォルト値を設定: IsDeleted=false");
         }
 
@@ -108,22 +108,15 @@ public class StudentController {
 
     @GetMapping("/updateStudentDetail")
     public String getUpdateStudentForm(@RequestParam("id") Long id, Model model) {
-        // 指定された学生IDの情報を取得
-        Student student = studentService.getStudentById(id);
-
-        // 取得した学生情報をログ出力
-        logger.debug("取得した学生情報: ID={}, データ={}", id, student);
-
-        // 学生が見つからない場合の処理
-        if (student == null) {
-            logger.warn("指定されたIDの学生が見つかりません。ID: {}", id);
-            model.addAttribute("errorMessage", "指定されたIDの学生が見つかりません。");
-            return "error"; // エラー画面表示
+        try {
+            Student student = studentService.getStudentById(id);
+            model.addAttribute("student", student);
+            return "updateStudentDetail"; // 更新フォームのHTMLページを返す
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getMessage());
+            model.addAttribute("errorMessage", e.getMessage());
+            return "error"; // エラー画面を表示
         }
-
-        // 取得した学生情報をモデルに追加
-        model.addAttribute("student", student);
-        return "updateStudentDetail"; // 更新フォームのHTMLページを返す
     }
 
     // ---------------- 学生情報更新 ----------------

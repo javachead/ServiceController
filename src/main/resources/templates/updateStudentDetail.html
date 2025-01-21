@@ -107,11 +107,11 @@
   </div>
 </form>
 
-<!-- 学生アカウント削除用フォーム -->
+<!-- 受講生情報の削除用フォーム -->
 <form th:action="@{/deleteStudent}" method="post">
   <input type="hidden" name="id" th:value="${student.id}" />
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-  <button type="submit" onclick="return confirm('このアカウントを削除しますか？');">このアカウント削除する</button>
+  <button type="submit" onclick="return confirm('この受講生情報を削除しますか？');">この受講生情報を削除する</button>
 </form>
 </body>
 </html>
