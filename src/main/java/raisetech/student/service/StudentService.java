@@ -44,43 +44,16 @@ public class StudentService {
             log.error("学生情報の更新にはIDが必要です。");
             throw new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
         }
+
         log.info("updateStudentDetailsを実行します。ID={}, データ={}", student.getId(), student);
 
-        // 既存の学生データを取得
-        Student existingStudent = studentRepository.findById(student.getId()).orElseThrow(() ->
-                new IllegalArgumentException("指定された学生IDが見つかりません: ID=" + student.getId())
-        );
-
+        // インプットされた Student データを直接利用して更新する
         validateName(student.getName());
         validateEmail(student.getEmail());
 
-        existingStudent.setName(student.getName());
-        existingStudent.setKanaName(student.getKanaName());
-        existingStudent.setNickname(student.getNickname());
-        existingStudent.setEmail(student.getEmail());
-        existingStudent.setArea(student.getArea());
-        existingStudent.setAge(student.getAge());
-        existingStudent.setSex(student.getSex());
+        studentRepository.updateStudentDetails(student);
 
-        // boolean型に基づく修正
-        existingStudent.setDeleted(student.isDeleted());
-
-        studentRepository.updateStudentDetails(existingStudent);
-
-        log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), existingStudent);
-    }
-
-    public List<Student> getAllStudents() {
-        log.info("すべての学生情報を取得します（isDeleted=false のみ）");
-
-        // データが isDeleted=false のものだけ取得
-        List<Student> students = studentRepository.findAllStudents()
-                .stream()
-                .filter(student -> !student.isDeleted())
-                .toList();
-
-        log.info("取得件数: {}", students.size());
-        return students;
+        log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), student);
     }
 
     @Transactional

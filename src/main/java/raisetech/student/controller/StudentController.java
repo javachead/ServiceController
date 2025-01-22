@@ -42,13 +42,12 @@ public class StudentController {
 
     @GetMapping("/newStudent")
     public String newStudent(Model model) {
-        StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(new Student());
+        // 引数付きコンストラクタを用いる
+        Student student = new Student();
+        List<StudentCourse> courses = List.of(new StudentCourse()); // 初期で1つの空コースを追加
+        StudentDetail studentDetail = new StudentDetail(student, courses);
 
-        // 初期状態で空のコースを1件だけ追加
-        studentDetail.addCourse(new StudentCourse());
         model.addAttribute("studentDetail", studentDetail);
-
         logger.debug("新規学生登録画面を表示しました");
         return "registerStudent";
     }
