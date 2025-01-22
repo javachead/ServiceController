@@ -52,7 +52,7 @@ public class StudentCourseService {
     }
 
     //コース名を一括更新
-    public List<StudentCourse> updateCourseNamesByStudentId(Integer studentId) {
+    public List<StudentCourse> updateByStudentId(Integer studentId) {
         log.info("学生ID {} でコース名を一括変更します。", studentId);
 
         // 学生IDでコースを取得

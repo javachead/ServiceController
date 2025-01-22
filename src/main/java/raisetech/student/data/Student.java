@@ -22,4 +22,5 @@ public class Student {
     private Integer age;
     private String sex;
     private String remark;
+    private boolean isDeleted; //プリミティブ型のbooleanへ修正
 }

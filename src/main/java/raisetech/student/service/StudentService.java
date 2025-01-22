@@ -14,6 +14,7 @@ import java.util.List;
 @Slf4j
 public class StudentService {
 
+
     private final StudentRepository studentRepository;
     private final StudentCourseService studentCourseService;
 
@@ -31,43 +32,28 @@ public class StudentService {
             studentRepository.insertStudent(student);
         } else {
             log.info("学生ID={} の情報を更新", student.getId());
-            updateStudentDetails(student.getId(), student);
+            updateStudentDetails(student);
         }
 
         studentCourseService.saveCourses(courses, student.getId());
     }
 
     @Transactional
-    public void updateStudentDetails(Long id, @Valid Student updatedStudent) {
-        log.info("学生ID={} の情報を更新します。更新データ: {}", id, updatedStudent);
+    public void updateStudentDetails(@Valid Student student) {
+        if (student.getId() == null) {
+            log.error("学生情報の更新にはIDが必要です。");
+            throw new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
+        }
 
-        Student existingStudent = studentRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException("指定された学生IDが見つかりません: ID=" + id)
-        );
+        log.info("updateStudentDetailsを実行します。ID={}, データ={}", student.getId(), student);
 
-        validateName(updatedStudent.getName());
-        validateEmail(updatedStudent.getEmail());
+        // インプットされた Student データを直接利用して更新する
+        validateName(student.getName());
+        validateEmail(student.getEmail());
 
-        existingStudent.setName(updatedStudent.getName());
-        existingStudent.setKanaName(updatedStudent.getKanaName());
-        existingStudent.setEmail(updatedStudent.getEmail());
-        studentRepository.updateStudentDetails(existingStudent);
+        studentRepository.updateStudentDetails(student);
 
-        log.info("学生ID={} の情報を更新しました。更新内容: {}", id, existingStudent);
-    }
-
-    public Student getStudentById(Long id) {
-        log.info("指定されたIDで学生を取得します: ID={}", id);
-        return studentRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException("学生が見つかりません: ID=" + id)
-        );
-    }
-
-    public List<Student> getAllStudents() {
-        log.info("すべての学生情報を取得します");
-        List<Student> students = studentRepository.findAllStudents();
-        log.info("取得件数: {}", students.size());
-        return students;
+        log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), student);
     }
 
     @Transactional
@@ -91,19 +77,19 @@ public class StudentService {
         }
     }
 
-    @Transactional
-    public void updateStudent(@Valid Student student) {
-        log.info("updateStudentメソッドを実行します。ID={}, データ={}", student.getId(), student);
+    public Student getStudentById(Long id) {
+        log.info("学生ID={} の情報を取得します", id);
 
-        // 学生IDがnullの場合は例外をスロー
-        if (student.getId() == null) {
-            log.error("学生情報の更新にはIDが必要です。");
-            throw new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
+        // リポジトリから学生を取得
+        Student student = studentRepository.findById(id).orElse(null);
+
+        // データが見つからない場合の処理
+        if (student == null || student.isDeleted()) {
+            log.warn("指定されたIDの学生が見つかりません。または削除されています。ID: {}", id);
+            throw new IllegalArgumentException("指定されたIDの学生が見つかりません: ID=" + id);
         }
 
-        // 既存の`updateStudentDetails`メソッドを再利用
-        updateStudentDetails(student.getId(), student);
-
-        log.info("学生情報が正常に更新されました。ID={}", student.getId());
+        log.info("学生情報が見つかりました: ID={}, データ={}", id, student);
+        return student;
     }
 }

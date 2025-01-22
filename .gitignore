@@ -45,4 +45,4 @@ bin/
 .vscode/
 
 ### ログファイル ###
-/logs
+logs/mybatis.log/*.log
