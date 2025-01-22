@@ -32,14 +32,14 @@ public class StudentService {
             studentRepository.insertStudent(student);
         } else {
             log.info("学生ID={} の情報を更新", student.getId());
-            updateStudentDetails(student);
+            updateStudentDetails(student.getId(), student);
         }
 
         studentCourseService.saveCourses(courses, student.getId());
     }
 
     @Transactional
-    public void updateStudentDetails(@Valid Student student) {
+    public void updateStudentDetails(Long id, @Valid Student student) {
         if (student.getId() == null) {
             log.error("学生情報の更新にはIDが必要です。");
             throw new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
@@ -61,6 +61,16 @@ public class StudentService {
         log.info("学生ID={} を削除します", id);
         studentRepository.deleteById(id);
         log.info("学生ID={} を削除しました", id);
+    }
+
+    // 学生情報を保存
+    public void saveStudent(Student student) {
+        // IDがnullなら新規作成、そうでなければ更新
+        if (student.getId() == null) {
+            studentRepository.insertStudent(student); // 学生を新規作成
+        } else {
+            updateStudentDetails(student.getId(), student); // 学生情報の更新処理
+        }
     }
 
     private void validateName(String name) {

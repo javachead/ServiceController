@@ -1,18 +1,11 @@
 package raisetech.student.controller;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import jakarta.validation.Valid;
-
-import java.util.List;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
@@ -20,155 +13,120 @@ import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
 
-@Controller
+import java.util.List;
+
+@RestController // 課題33　RESTコントローラーへ変更
+@RequestMapping("/api/studentsList")
 public class StudentController {
 
     private final Logger logger = LoggerFactory.getLogger(StudentController.class);
 
+    private final StudentCourseService studentCourseService;
     private final StudentDetailService studentDetailService;
     private final StudentService studentService;
-    private final StudentCourseService studentCourseService;
 
     // コンストラクタによる依存性注入
-    public StudentController(StudentDetailService studentDetailService,
-                             StudentService studentService,
-                             StudentCourseService studentCourseService) {
+    public StudentController(StudentCourseService studentCourseService,
+                             StudentDetailService studentDetailService,
+                             StudentService studentService) {
+        this.studentCourseService = studentCourseService;
         this.studentDetailService = studentDetailService;
         this.studentService = studentService;
-        this.studentCourseService = studentCourseService;
     }
 
     // ---------------- 新規登録 ----------------
 
-    @GetMapping("/newStudent")
-    public String newStudent(Model model) {
-        // 引数付きコンストラクタを用いる
-        Student student = new Student();
-        List<StudentCourse> courses = List.of(new StudentCourse()); // 初期で1つの空コースを追加
-        StudentDetail studentDetail = new StudentDetail(student, courses);
-
-        model.addAttribute("studentDetail", studentDetail);
-        logger.debug("新規学生登録画面を表示しました");
-        return "registerStudent";
-    }
-
-    @PostMapping("/registerStudent")
-    public String registerStudent(@ModelAttribute("studentDetail") @Valid StudentDetail studentDetail,
-                                  BindingResult result, Model model) {
-        if (result.hasErrors()) {
-            logger.warn("バリデーションエラーが発生しました: {}", result.getFieldErrors());
-            model.addAttribute("studentDetail", studentDetail);
-            return "registerStudent";
-        }
-
-        // ログ出力: 受け取った`studentDetail`の内容を確認
-        logger.debug("受け取った学生登録データ: 学生情報={}, コース情報={}",
-                studentDetail.getStudent(),
-                studentDetail.getStudentCourses());
-
-        // デフォルト値補完
+    @PostMapping // ベースパス (/api/studentsList) に相対
+    public ResponseEntity<?> addStudentWithCourses(@RequestBody @Valid StudentDetail studentDetail) {
+        // `Student`情報を登録
         Student student = studentDetail.getStudent();
-        if (!student.isDeleted()) {
-            student.setDeleted(false);
-            logger.debug("学生データのデフォルト値を設定: IsDeleted=false");
-        }
+        studentService.saveStudent(student); // 自動生成IDが`student`にセットされる
 
-        // 学生情報とコース情報を保存
-        List<StudentCourse> courses = studentDetail.getStudentCourses();
-        studentService.saveStudentAndCourses(student, courses);
+        // `StudentCourses`情報を登録
+        List<StudentCourse> studentCourses = studentDetail.getStudentCourses();
+        studentCourses.forEach(course -> {
+            course.setStudentId(student.getId()); // `student_id`を設定
+            studentCourseService.saveStudentCourse(course);
+        });
 
-        logger.info("学生情報を登録しました: {}", student.getName());
-        return "redirect:/studentList";
+        return ResponseEntity.ok("新しい学生とコースが登録されました");
     }
 
     // ---------------- 一覧取得 ----------------
 
-    @GetMapping("/studentList")
-    public String getStudentList(Model model) {
-        // 学生詳細情報を取得
+    @GetMapping // GETリクエスト（/api/students）
+    public ResponseEntity<?> getStudentList() {
         List<StudentDetail> studentDetails = studentDetailService.findAllStudentDetails();
-
-        // ログ出力: 取得した学生詳細情報を確認
-        logger.debug("取得した学生詳細情報: {}", studentDetails);
-
-        // Nullチェックしてからモデルへ追加
-        if (studentDetails != null && !studentDetails.isEmpty()) {
-            model.addAttribute("studentList", studentDetails);
-            logger.info("学生一覧を取得しました。データ件数: {}", studentDetails.size());
-        } else {
-            logger.warn("学生詳細データが空です。");
-            model.addAttribute("errorMessage", "データが存在しません。");
+        if (studentDetails == null || studentDetails.isEmpty()) {
+            logger.warn("学生一覧が空です");
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("データが存在しません");
         }
 
-        return "studentList";
+        logger.info("学生一覧を取得しました。データ件数: {}", studentDetails.size());
+        return ResponseEntity.ok(studentDetails);
     }
 
-    // ---------------- 詳細表示と更新確認 ----------------
+    // ---------------- コース取得 ----------------
 
-    @GetMapping("/updateStudentDetail")
-    public String getUpdateStudentForm(@RequestParam("id") Long id, Model model) {
-        try {
-            Student student = studentService.getStudentById(id);
-            model.addAttribute("student", student);
-            return "updateStudentDetail"; // 更新フォームのHTMLページを返す
-        } catch (IllegalArgumentException e) {
-            logger.warn(e.getMessage());
-            model.addAttribute("errorMessage", e.getMessage());
-            return "error"; // エラー画面を表示
+    @GetMapping("/{id}/getCourses")
+    public ResponseEntity<?> getStudentCourses(@PathVariable Long id) {
+        // 学生IDに紐づくコース情報を取得
+        List<StudentCourse> courses = studentCourseService.findByStudentId(id);
+
+        if (courses == null || courses.isEmpty()) {
+            logger.warn("学生ID {} に紐づくコースが見つかりません", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("学生に紐づくコースが見つかりません");
         }
+
+        logger.info("学生ID {} のコース情報を取得しました: 件数={}", id, courses.size());
+        return ResponseEntity.ok(courses);
+    }
+
+    // ---------------- 詳細取得 ----------------
+
+    @GetMapping("/getStudent{id}")
+    public ResponseEntity<?> getStudentById(@PathVariable Long id) {
+        Student student = studentService.getStudentById(id);
+
+        if (student == null) {
+            logger.warn("指定されたIDの学生が見つかりません。ID: {}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("指定された学生データが見つかりません");
+        }
+
+        logger.info("指定されたIDの学生を取得しました。ID: {}", student.getId());
+        return ResponseEntity.ok(student);
     }
 
     // ---------------- 学生情報更新 ----------------
 
-    @PostMapping("/updateStudentDetail")
-    public String updateStudent(@Valid @ModelAttribute("student") Student student,
-                                BindingResult result, Model model) {
-        // バリデーションエラーがある場合
-        if (result.hasErrors()) {
-            logger.warn("バリデーションエラー: {}", result.getFieldErrors());
-            return "updateStudentDetail";
+    @PostMapping("/updateStudent")
+    public ResponseEntity<Boolean> updateStudent(@RequestBody StudentDetail studentDetail) {
+
+        try {
+            Student student = studentDetail.getStudent();
+
+            // deleted プロパティが未初期化の場合の安全策
+            if (!student.isDeleted()) { // Lombokの `isDeleted()` を使用
+                student.setDeleted(false);
+            }
+
+            // 学生情報の更新処理
+            studentService.updateStudentDetails(student.getId(), student);
+
+            // 更新成功時に true を返す
+            return ResponseEntity.ok(true);
+        } catch (Exception e) {
+            // 更新処理でエラー発生時に false を返す
+            return ResponseEntity.ok(false);
         }
-
-        // ログ出力: 更新対象の学生情報
-        logger.debug("更新対象の学生情報: {}", student);
-
-        // 学生情報を更新
-        studentService.updateStudentDetails(student);
-        logger.info("学生情報を更新しました。ID: {}, 名前: {}", student.getId(), student.getName());
-
-        // 更新完了後、学生リストページへリダイレクト
-        return "redirect:/studentList";
     }
-
     // ---------------- 学生削除 ----------------
 
-    @PostMapping("/deleteStudent")
-    public String deleteStudent(@RequestParam("id") Long id) {
-        // 指定されたIDで学生を削除
+    @DeleteMapping("/deleteStudent{id}") // DELETEリクエスト（/api/students/{id}）
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudentById(id);
         logger.info("指定された学生を削除しました。ID: {}", id);
 
-        // 学生リストページにリダイレクト
-        return "redirect:/studentList";
-    }
-
-    @PostMapping("/updateStudent")
-    public String updateStudentPost(@Valid @ModelAttribute("student") Student student,
-                                    BindingResult result, Model model) {
-        // バリデーションエラーがある場合はフォームページを再表示
-        if (result.hasErrors()) {
-            logger.warn("バリデーションエラー: {}", result.getFieldErrors());
-            return "updateStudentDetail";
-        }
-
-        // ログ出力: 更新対象の詳細情報を確認
-        logger.debug("更新対象の学生情報: {}", student);
-
-        // 学生情報をサービス層で更新
-        studentService.updateStudentDetails(student);
-        logger.info("学生情報を更新しました。ID: {}, 名前: {}", student.getId(), student.getName());
-
-        // 正常終了後、学生一覧画面へリダイレクト
-        return "redirect:/studentList";
+        return ResponseEntity.ok("学生情報が削除されました");
     }
 }
