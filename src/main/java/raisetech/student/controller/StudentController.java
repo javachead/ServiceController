@@ -13,10 +13,13 @@ import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@RestController // 課題33　RESTコントローラーへ変更
-@RequestMapping("/api/studentsList")
+@RestController
+@RequestMapping("/api/students")
 public class StudentController {
 
     private final Logger logger = LoggerFactory.getLogger(StudentController.class);
@@ -34,99 +37,114 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    // ---------------- 新規登録 ----------------
-
-    @PostMapping // ベースパス (/api/studentsList) に相対
+    // ---------------- 学生登録 ----------------
+    @PostMapping
     public ResponseEntity<?> addStudentWithCourses(@RequestBody @Valid StudentDetail studentDetail) {
         // `Student`情報を登録
         Student student = studentDetail.getStudent();
-        studentService.saveStudent(student); // 自動生成IDが`student`にセットされる
+        studentService.saveStudent(student);
 
         // `StudentCourses`情報を登録
         List<StudentCourse> studentCourses = studentDetail.getStudentCourses();
         studentCourses.forEach(course -> {
-            course.setStudentId(student.getId()); // `student_id`を設定
+            course.setStudentId(student.getId());
             studentCourseService.saveStudentCourse(course);
         });
 
-        return ResponseEntity.ok("新しい学生とコースが登録されました");
+        // レスポンス
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "新しい学生とコースが登録されました");
+        response.put("student", student);
+        response.put("studentCourses", studentCourses);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ---------------- 一覧取得 ----------------
-
-    @GetMapping // GETリクエスト（/api/students）
+    // ---------------- 全学生一覧取得 ----------------
+    @GetMapping
     public ResponseEntity<?> getStudentList() {
         List<StudentDetail> studentDetails = studentDetailService.findAllStudentDetails();
+
+        Map<String, Object> response = new HashMap<>();
+
         if (studentDetails == null || studentDetails.isEmpty()) {
-            logger.warn("学生一覧が空です");
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("データが存在しません");
+            response.put("message", "学生データが存在しません");
+            response.put("data", Collections.emptyList());
+            return ResponseEntity.ok(response);
         }
 
-        logger.info("学生一覧を取得しました。データ件数: {}", studentDetails.size());
-        return ResponseEntity.ok(studentDetails);
+        response.put("message", "学生一覧を取得しました");
+        response.put("data", studentDetails);
+        return ResponseEntity.ok(response);
     }
 
-    // ---------------- コース取得 ----------------
-
-    @GetMapping("/{id}/getCourses")
-    public ResponseEntity<?> getStudentCourses(@PathVariable Long id) {
-        // 学生IDに紐づくコース情報を取得
-        List<StudentCourse> courses = studentCourseService.findByStudentId(id);
-
-        if (courses == null || courses.isEmpty()) {
-            logger.warn("学生ID {} に紐づくコースが見つかりません", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("学生に紐づくコースが見つかりません");
-        }
-
-        logger.info("学生ID {} のコース情報を取得しました: 件数={}", id, courses.size());
-        return ResponseEntity.ok(courses);
-    }
-
-    // ---------------- 詳細取得 ----------------
-
-    @GetMapping("/getStudent{id}")
+    // ---------------- 個別学生取得 ----------------
+    @GetMapping("/{id}")
     public ResponseEntity<?> getStudentById(@PathVariable Long id) {
         Student student = studentService.getStudentById(id);
 
         if (student == null) {
-            logger.warn("指定されたIDの学生が見つかりません。ID: {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("指定された学生データが見つかりません");
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "指定された学生データが見つかりません");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        logger.info("指定されたIDの学生を取得しました。ID: {}", student.getId());
-        return ResponseEntity.ok(student);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "指定されたIDの学生を取得しました");
+        response.put("data", student);
+        return ResponseEntity.ok(response);
+    }
+
+    // ---------------- 学生コース一覧取得 ----------------
+    @GetMapping("/{id}/courses")
+    public ResponseEntity<?> getStudentCourses(@PathVariable Long id) {
+        List<StudentCourse> courses = studentCourseService.findByStudentId(id);
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (courses == null || courses.isEmpty()) {
+            response.put("message", "学生に紐付くコースが見つかりません");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        response.put("message", "学生のコース一覧を取得しました");
+        response.put("data", courses);
+        return ResponseEntity.ok(response);
     }
 
     // ---------------- 学生情報更新 ----------------
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody @Valid StudentDetail studentDetail) {
+        Student student = studentDetail.getStudent();
 
-    @PostMapping("/updateStudent")
-    public ResponseEntity<Boolean> updateStudent(@RequestBody StudentDetail studentDetail) {
-
-        try {
-            Student student = studentDetail.getStudent();
-
-            // deleted プロパティが未初期化の場合の安全策
-            if (!student.isDeleted()) { // Lombokの `isDeleted()` を使用
-                student.setDeleted(false);
-            }
-
-            // 学生情報の更新処理
-            studentService.updateStudentDetails(student.getId(), student);
-
-            // 更新成功時に true を返す
-            return ResponseEntity.ok(true);
-        } catch (Exception e) {
-            // 更新処理でエラー発生時に false を返す
-            return ResponseEntity.ok(false);
+        if (student == null || !student.getId().equals(id)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "無効な学生情報です");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+
+        studentService.updateStudentDetails(id, student);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "学生情報が更新されました");
+        return ResponseEntity.ok(response);
     }
+
     // ---------------- 学生削除 ----------------
-
-    @DeleteMapping("/deleteStudent{id}") // DELETEリクエスト（/api/students/{id}）
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
-        studentService.deleteStudentById(id);
-        logger.info("指定された学生を削除しました。ID: {}", id);
+        Student student = studentService.getStudentById(id);
 
-        return ResponseEntity.ok("学生情報が削除されました");
+        if (student == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "指定された学生が見つかりません");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        studentService.deleteStudentById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "学生が削除されました");
+        return ResponseEntity.ok(response);
     }
 }
