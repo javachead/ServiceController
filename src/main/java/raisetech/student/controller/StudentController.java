@@ -147,8 +147,4 @@ public class StudentController {
         response.put("message", "学生が削除されました");
         return ResponseEntity.ok(response);
     }
-
-    public Logger getLogger() {
-        return logger;
-    }
 }
