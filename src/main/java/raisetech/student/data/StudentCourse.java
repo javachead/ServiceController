@@ -1,11 +1,14 @@
 package raisetech.student.data;
 
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.time.LocalDate;
+/**
+ * 学生のコース情報を管理するデータクラス。
+ * 学生IDと紐づけて、受講中または受講完了したコースの情報を保持します。
+ */
 
 @Getter
 @Setter

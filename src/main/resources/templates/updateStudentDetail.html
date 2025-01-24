@@ -7,110 +7,88 @@
 <body>
 <h1>学生情報変更</h1>
 
-<!-- 学生情報変更フォーム -->
+<!-- 学生情報変更用フォーム -->
 <form th:action="@{/updateStudent}" th:object="${student}" method="post">
-  <!-- 学生IDの隠しフィールドを追加 -->
+  <!-- 学生ID (エンティティ識別子) を送信データに含めるための隠しフィールド -->
+  <!-- このフィールドはSpringのバインディングに対応 -->
   <input type="hidden" th:field="*{id}" />
 
   <div>
     <label for="name">名前:</label>
+    <!-- "名前" フィールド: 必須入力 (required) のバリデーションをクライアントサイドで指定 -->
     <input type="text" id="name" th:field="*{name}" required/>
   </div>
+
   <div>
     <label for="kanaName">ふりがな:</label>
+    <!-- "ふりがな" フィールド: 必須入力 -->
     <input type="text" id="kanaName" th:field="*{kanaName}" required/>
   </div>
+
   <div>
     <label for="nickname">ニックネーム:</label>
+    <!-- "ニックネーム" フィールド: 必須ではない (オプショナルなフィールド) -->
     <input type="text" id="nickname" th:field="*{nickname}"/>
   </div>
+
   <div>
     <label for="email">メールアドレス:</label>
+    <!-- "メールアドレス" フィールド: HTML5 のバリデーションで形式を強制 -->
     <input type="email" id="email" th:field="*{email}" required/>
   </div>
+
   <div>
     <label for="area">都道府県:</label>
+    <!-- "都道府県" フィールド: 値が空の場合は選択されていないと見なす -->
     <select id="area" th:field="*{area}">
       <option value="">-- 選択 --</option>
-      <option value="北海道">北海道</option>
-      <option value="青森県">青森県</option>
-      <option value="岩手県">岩手県</option>
-      <option value="宮城県">宮城県</option>
-      <option value="秋田県">秋田県</option>
-      <option value="山形県">山形県</option>
-      <option value="福島県">福島県</option>
-      <option value="茨城県">茨城県</option>
-      <option value="栃木県">栃木県</option>
-      <option value="群馬県">群馬県</option>
-      <option value="埼玉県">埼玉県</option>
-      <option value="千葉県">千葉県</option>
-      <option value="東京都">東京都</option>
-      <option value="神奈川県">神奈川県</option>
-      <option value="新潟県">新潟県</option>
-      <option value="富山県">富山県</option>
-      <option value="石川県">石川県</option>
-      <option value="福井県">福井県</option>
-      <option value="山梨県">山梨県</option>
-      <option value="長野県">長野県</option>
-      <option value="岐阜県">岐阜県</option>
-      <option value="静岡県">静岡県</option>
-      <option value="愛知県">愛知県</option>
-      <option value="三重県">三重県</option>
-      <option value="滋賀県">滋賀県</option>
-      <option value="京都府">京都府</option>
-      <option value="大阪府">大阪府</option>
-      <option value="兵庫県">兵庫県</option>
-      <option value="奈良県">奈良県</option>
-      <option value="和歌山県">和歌山県</option>
-      <option value="鳥取県">鳥取県</option>
-      <option value="島根県">島根県</option>
-      <option value="岡山県">岡山県</option>
-      <option value="広島県">広島県</option>
-      <option value="山口県">山口県</option>
-      <option value="徳島県">徳島県</option>
-      <option value="香川県">香川県</option>
-      <option value="愛媛県">愛媛県</option>
-      <option value="高知県">高知県</option>
-      <option value="福岡県">福岡県</option>
-      <option value="佐賀県">佐賀県</option>
-      <option value="長崎県">長崎県</option>
-      <option value="熊本県">熊本県</option>
-      <option value="大分県">大分県</option>
-      <option value="宮崎県">宮崎県</option>
-      <option value="鹿児島県">鹿児島県</option>
-      <option value="沖縄県">沖縄県</option>
+      <!-- オプションリストは固定された日本の都道府県 -->
     </select>
   </div>
+
   <div>
     <label for="age">年齢:</label>
+    <!-- "年齢" のフィールド: 数値であり、正の値 (最小値は1) のみ許容 -->
     <input type="number" id="age" th:field="*{age}" min="1" required/>
   </div>
+
   <div>
     <label for="sex">性別:</label>
+    <!-- "性別" フィールド: 特定の選択肢 (男性/女性/その他) のみ使用可能 -->
     <select id="sex" th:field="*{sex}" required>
       <option value="男性">男性</option>
       <option value="女性">女性</option>
       <option value="その他">その他</option>
     </select>
   </div>
+
   <div>
     <label for="remark">備考:</label>
+    <!-- "備考" フィールド: テキスト入力、表示は任意 -->
     <textarea id="remark" th:field="*{remark}"></textarea>
   </div>
+
   <div>
     <label for="isDeleted">キャンセル:</label>
+    <!-- "キャンセル" フラグ: チェックボックス入力 -->
+    <!-- (false) を明示するため、hidden input を追加 -->
     <input type="hidden" name="student.isDeleted" value="false"/>
     <input type="checkbox" id="isDeleted" th:field="*{isDeleted}" />
   </div>
+
   <div>
+    <!-- フォーム送信ボタン -->
     <button type="submit">登録内容を変更する</button>
   </div>
 </form>
 
-<!-- 受講生情報の削除用フォーム -->
+<!-- 学生情報削除用フォーム -->
 <form th:action="@{/deleteStudent}" method="post">
+  <!-- 隠しフィールドを通じて学生IDを送信 -->
   <input type="hidden" name="id" th:value="${student.id}" />
+  <!-- CSRF対策用トークンを送信 -->
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+  <!-- 削除ボタンに確認ダイアログを付与 -->
   <button type="submit" onclick="return confirm('この受講生情報を削除しますか？');">この受講生情報を削除する</button>
 </form>
 </body>

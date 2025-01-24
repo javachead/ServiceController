@@ -1,16 +1,22 @@
 package raisetech.student.data;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
+
+/**
+ * 学生情報を管理するクラス（DTO）。
+ * 学生のプロパティを保持するデータコンテナであり、別途バリデーションや操作ロジックはサービス層で実装されることを前提としています。
+ */
+
 public class Student {
 
     private Long id;
@@ -22,5 +28,5 @@ public class Student {
     private Integer age;
     private String sex;
     private String remark;
-    private boolean isDeleted; //プリミティブ型のbooleanへ修正
+    private boolean isDeleted;
 }

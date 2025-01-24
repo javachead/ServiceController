@@ -1,45 +1,33 @@
 package raisetech.student.domain;
 
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
-
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * 学生詳細情報のドメインクラス。
+ * 学生情報 (Student) と紐付くコース情報 (StudentCourse) を管理します。
+ * バリデーションは @Valid による Bean Validation を使用。
+ */
 @Setter
 @Getter
 public class StudentDetail {
 
     @Valid
-    private Student student; // 学生情報
+    private Student student; // 学生情報を保持
 
     @Valid
-    private List<StudentCourse> studentCourses; // 学生が登録しているコース情報
+    private List<StudentCourse> studentCourses; // 学生が登録しているコース情報のリスト
 
-    // デフォルトコンストラクタ
+    /**
+     * デフォルトコンストラクタ。
+     * 初期状態でコースリストを空のリストとして初期化します。
+     * null による NullPointerException を防ぐ意図があります。
+     */
     public StudentDetail() {
         this.studentCourses = new ArrayList<>();
-    }
-
-    // 学生情報＋コース情報付きコンストラクタ
-    public StudentDetail(Student student, List<StudentCourse> studentCourses) {
-        this.student = student;
-        this.studentCourses = studentCourses != null ? studentCourses : new ArrayList<>();
-    }
-
-    // 学生情報のみコンストラクタ（コース情報用の初期化追加）
-    public StudentDetail(Student student) {
-        this.student = student;
-        this.studentCourses = new ArrayList<>();
-    }
-
-    // コース情報追加メソッド
-    public void addCourse(StudentCourse course) {
-        if (course != null) {
-            this.studentCourses.add(course);
-        }
     }
 }
