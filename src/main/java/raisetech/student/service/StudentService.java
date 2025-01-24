@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
+import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.repository.StudentRepository;
 
 @Service
@@ -96,7 +97,8 @@ public class StudentService {
                 .filter(student -> !student.isDeleted()) // 削除フラグが立っていないか確認
                 .orElseThrow(() -> {
                     log.warn("指定されたIDの学生が見つかりません。または削除されています。ID: {}", id);
-                    return new IllegalArgumentException("指定されたIDの学生が見つかりません: ID=" + id);
+                    // カスタム例外をスローするように変更
+                    return new StudentNotFoundException("指定されたIDの学生が見つかりません: ID=" + id);
                 });
     }
 }
