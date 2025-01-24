@@ -1,8 +1,12 @@
 package raisetech.student.repository;
 
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Options;
 import raisetech.student.data.Student;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -20,11 +24,9 @@ public interface StudentRepository {
     // --------------------- 学生情報を追加 ---------------------
 
     @Insert("INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted) " +
-            "VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{isDeleted})")
+            "VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{deleted})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertStudent(Student student);
-
-    // --------------------- 学生情報を更新 ---------------------
 
     @Update("UPDATE student SET " +
             "name = #{name}, " +
@@ -35,7 +37,7 @@ public interface StudentRepository {
             "age = #{age}, " +
             "sex = #{sex}, " +
             "remark = #{remark}, " +
-            "is_deleted = #{isDeleted} " +
+            "is_deleted = #{deleted} " +
             "WHERE id = #{id}")
     void updateStudentDetails(Student student);
 

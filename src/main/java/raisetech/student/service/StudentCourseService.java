@@ -22,26 +22,21 @@ public class StudentCourseService {
 
     //学生IDに基づくコース情報を取得
     public List<StudentCourse> findByStudentId(Long studentId) {
-        log.info("学生ID {} に基づいてコース情報を取得します。", studentId);
-        List<StudentCourse> courses = studentCourseRepository.findByStudentId(studentId);
-        log.info("コース件数: {}", courses.size());
-        return courses;
+        log.info("学生ID={} に関連するコースを取得します", studentId);
+        return studentCourseRepository.findByStudentId(studentId);
     }
 
-    //学生IDに紐づくコース情報を保存または更新
-    public void saveCourses(List<StudentCourse> courses, Long studentId) {
-        log.info("学生ID {} に基づくコース情報を保存または更新します。件数: {}", studentId, courses.size());
-
-        // 学生に関連する既存のコース情報を取得
-        List<StudentCourse> existingCourses = studentCourseRepository.findByStudentId(studentId);
-
-        // 更新または新規登録
-        processNewAndUpdatedCourses(courses, existingCourses, studentId);
-
-        // 削除対象のコースを判定して削除
-        removeNonExistentCourses(courses, existingCourses);
-
-        log.info("すべての処理が完了しました。");
+    // 新規コースを保存または更新するメソッドを追加
+    public void saveStudentCourse(StudentCourse course) {
+        if (course.getId() == null) {
+            // IDがない場合、新規登録
+            log.info("新しいコースを登録します: {}", course);
+            studentCourseRepository.insertCourse(course);
+        } else {
+            // 既存コースの場合、更新を実施
+            log.info("コースID={} を更新します: {}", course.getId(), course);
+            studentCourseRepository.updateCourse(course);
+        }
     }
 
     //コース情報の更新処理
@@ -103,5 +98,21 @@ public class StudentCourseService {
                 studentCourseRepository.deleteCourse(existingCourse.getId());
             }
         }
+    }
+
+    //学生IDに紐づくコース情報を保存または更新
+    public void saveCourses(List<StudentCourse> courses, Long studentId) {
+        log.info("学生ID {} に基づくコース情報を保存または更新します。件数: {}", studentId, courses.size());
+
+        // 学生に関連する既存のコース情報を取得
+        List<StudentCourse> existingCourses = studentCourseRepository.findByStudentId(studentId);
+
+        // 更新または新規登録
+        processNewAndUpdatedCourses(courses, existingCourses, studentId);
+
+        // 削除対象のコースを判定して削除
+        removeNonExistentCourses(courses, existingCourses);
+
+        log.info("すべての処理が完了しました。");
     }
 }
