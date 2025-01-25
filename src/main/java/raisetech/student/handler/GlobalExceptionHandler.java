@@ -1,34 +1,58 @@
 package raisetech.student.handler;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import raisetech.student.dto.ErrorResponse;
 import raisetech.student.exception.StudentNotFoundException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * アプリケーション全体で例外を統一的に処理する例外ハンドラー。
- * `@RestControllerAdvice` を使用して各コントローラ層で発生した例外をキャッチし、
- * HTTP ステータスコードに基づく適切なレスポンスを生成します。
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * バリデーションエラー（不正なリクエスト）をハンドリング。
-     * @param ex IllegalArgumentException インスタンス
-     * @return 400 BAD_REQUEST と適切なエラーメッセージ
+     * 入力値バリデーションエラー（MethodArgumentNotValidException）のハンドリング。
+     * @param ex MethodArgumentNotValidException インスタンス
+     * @return 400 BAD_REQUEST とフィールドごとのエラーメッセージ
      */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
-        log.warn("【バリデーションエラー】: {}", ex.getMessage());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException ex) {
+        log.warn("【入力値バリデーションエラー】: {}", ex.getMessage());
+
+        // 入力値エラーのすべてのフィールドとメッセージを収集
+        BindingResult bindingResult = ex.getBindingResult();
+        Map<String, String> errors = new HashMap<>();
+        bindingResult.getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
 
         // エラーレスポンスを作成
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    /**
+     * ConstraintViolationExceptionのハンドリング。
+     * （例えば、@Minや@Maxアノテーション違反時）
+     * @param ex ConstraintViolationException インスタンス
+     * @return 400 BAD_REQUEST とエラーレスポンス
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+        log.warn("【入力データ制約違反】: {}", ex.getMessage());
+
         ErrorResponse response = new ErrorResponse(
-                "不正なリクエストです",
+                "入力データに問題があります",
                 ex.getMessage(),
                 HttpStatus.BAD_REQUEST.value()
         );
@@ -36,29 +60,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-
     /**
-     * 学生が見つからない場合に対応する例外ハンドラー。
-     * StudentNotFoundException がスローされた際に適切に処理を行い、
-     * @param ex 学生が見つからない場合にスローされる StudentNotFoundException
-     * @return HTTPステータスコード 404（NOT FOUND）と例外メッセージを含むレスポンスエンティティ
+     * 学生が見つからない場合（StudentNotFoundException）のハンドリング。
+     * @param ex StudentNotFoundException
+     * @return HTTP 404 NOT_FOUND とエラーレスポンス
      */
     @ExceptionHandler(StudentNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleStudentNotFoundException(StudentNotFoundException ex) {
+        log.warn("【StudentNotFoundException】: {}", ex.getMessage());
 
-        // エラーレスポンスを生成
         ErrorResponse response = new ErrorResponse(
-                "学生が見つかりません",     // ユーザー向けのメッセージ
-                ex.getMessage(),          // 例外の詳細なメッセージ（内部向け情報）
-                HttpStatus.NOT_FOUND.value() // HTTPステータスコード
+                "指定された学生IDが見つかりませんでした。",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value()
         );
 
-        // HTTP 404 ステータスコードとエラーレスポンスを送信
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     /**
-     * 全般的なアプリケーション例外をキャッチ。
+     * その他の予期しない例外のハンドリング。
      * @param ex Exception インスタンス
      * @return 500 INTERNAL_SERVER_ERROR とエラーレスポンス
      */
@@ -66,7 +87,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
         log.error("【予期しないエラー発生】: {}", ex.getMessage(), ex);
 
-        // クライアントには限定的な情報を送信し、内部情報の漏洩を防ぐ
         ErrorResponse response = new ErrorResponse(
                 "サーバーエラーが発生しました。サポートに連絡してください。",
                 "An unexpected error occurred.",
@@ -75,4 +95,5 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+
 }

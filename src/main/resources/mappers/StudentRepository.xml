@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="raisetech.student.repository.StudentRepository">
+
+    <!-- 共通: 学生テーブルのカラムリスト -->
+    <sql id="StudentColumns">
+        id, name, kana_name, nickname, email, area, age, sex, remark, is_deleted
+    </sql>
+
+    <!-- 学生IDを指定して学生情報を取得 -->
+    <select id="findById" parameterType="java.lang.Long" resultType="raisetech.student.data.Student">
+        SELECT
+        <include refid="StudentColumns" />
+        FROM student
+        WHERE id = #{id};
+    </select>
+
+    <!-- 全ての学生情報（削除フラグを考慮して）を取得 -->
+    <select id="findAllStudents" resultType="raisetech.student.data.Student">
+        SELECT
+        <include refid="StudentColumns" />
+        FROM student
+        WHERE is_deleted = false;
+    </select>
+
+    <!-- 新しい学生情報を登録 -->
+    <insert id="insertStudent" parameterType="raisetech.student.data.Student">
+        INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted)
+        VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{deleted});
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <!-- 学生情報を更新 -->
+    <update id="updateStudentDetails" parameterType="raisetech.student.data.Student">
+        UPDATE student
+        SET name = #{name},
+            kana_name = #{kanaName},
+            nickname = #{nickname},
+            email = #{email},
+            area = #{area},
+            age = #{age},
+            sex = #{sex},
+            remark = #{remark},
+            is_deleted = #{deleted}
+        WHERE id = #{id};
+    </update>
+
+    <!-- 学生情報を物理削除 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM student WHERE id = #{id};
+    </delete>
+
+</mapper>
