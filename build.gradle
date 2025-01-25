@@ -1,69 +1,72 @@
 plugins {
+	// 必要なGradleプラグインを適用
+	// Javaプロジェクト用
 	id 'java'
+	// WARファイルパッケージング用
 	id 'war'
+	// Spring Boot用
 	id 'org.springframework.boot' version '3.2.0'
+	// Spring依存管理プラグイン
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	// アプリケーションプロジェクト用
 	id 'application'
-	id 'groovy'
 }
 
-group = 'raisetech.student.management'
-version = '1.0.0'
+group = 'raisetech.student.management' // プロジェクトのグループ名
+version = '1.0.0' // バージョン番号
 
 java {
+	// Javaのツールチェーンを構成（JDK 21を指定）
 	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
+		languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定
 	}
 }
 
 configurations {
+	// `compileOnly`の依存関係にアノテーションプロセッサを含む設定
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
 }
 
 application {
+	// アプリケーションのエントリーポイント（メインクラス）を指定
 	mainClass = 'raisetech.student.management.StudentManagementApplication'
 }
 
 repositories {
-	mavenCentral()
-	google()
-	gradlePluginPortal()
+	// 依存関係を取得するためのリポジトリを設定
+	mavenCentral() // Maven Centralリポジトリを使用
 }
 
 dependencies {
-	// Spring Boot関連
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Spring Boot関連依存関係
+	implementation 'org.springframework.boot:spring-boot-starter-web' // Spring MVC（Webアプリケーション用）
+	implementation 'org.springframework.boot:spring-boot-starter' // 基本的なSpring Bootの依存関係
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleafテンプレートエンジン用
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // Tomcatサーバー（実行時依存）
+	implementation 'org.springframework.boot:spring-boot-starter-validation' // 入力検証用
 
-	// データベース関連
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	implementation 'mysql:mysql-connector-java:8.0.33'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+	// データベース関連依存関係
+	runtimeOnly 'mysql:mysql-connector-java:8.0.33' // MySQL用JDBCドライバ
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3' // MyBatis用Starter
 
-	// その他のライブラリ
-	implementation 'org.apache.commons:commons-lang3:3.14.0'
-	implementation 'org.codehaus.groovy:groovy-all:3.0.7'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	// その他のユーティリティライブラリ
+	implementation 'org.apache.commons:commons-lang3:3.14.0' // Apacheの汎用ユーティリティライブラリ（文字列処理など）
+	implementation 'org.codehaus.groovy:groovy-all:3.0.7' // Groovy言語用ライブラリ
+	annotationProcessor 'org.projectlombok:lombok' // Lombokアノテーションの処理用
 
-	// テスト関連
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-	runtimeOnly 'com.h2database:h2'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+	// テスト用ライブラリ
+	testImplementation 'org.springframework.boot:spring-boot-starter-test' // Spring Bootのテスト依存関係
+	runtimeOnly 'com.h2database:h2' // 組み込みテスト用データベース
+	implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0' // JPAとしての永続化管理API
 }
 
 tasks.withType(JavaCompile).configureEach {
-	// 開発で使用するJavaバージョン
+	// JDK 21をJavaコンパイルタスクで使用
 	javaCompiler = javaToolchains.compilerFor {
-		languageVersion.set(JavaLanguageVersion.of(21))
+		languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定（JDK 21）
 	}
-	options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true'
+	// JVMオプションを追加
+	options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true' // JVMに自己アタッチを許可する設定
 }

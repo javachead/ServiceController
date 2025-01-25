@@ -1,7 +1,11 @@
+# サポートファイル
 HELP.md
-.gradle
+
+# Gradle関連
+.gradle/
 build/
-/lib/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 # 外部ライブラリのディレクトリを無視
 /node_modules/
@@ -9,11 +13,10 @@ build/
 *.jar
 *.war
 
-!gradle/wrapper/gradle-wrapper.jarApplication
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Gradle Wrapper（例外的にバージョン管理するファイル）
+!gradle/wrapper/gradle-wrapper.jar
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA関連
 .idea/
 *.iws
 *.iml
@@ -22,7 +25,7 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### STS (Spring Tool Suite) ###
+# Spring Tool Suite (STS)関連
 .apt_generated
 .classpath
 .factorypath
@@ -34,18 +37,22 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### NetBeans ###
+# NetBeans関連
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# Visual Studio Code関連
 .vscode/
 
-### ログファイル ###
-logs/mybatis.log/*.log.
-logs/
-*.log
-*.log.*.gz
+# ログファイルを無視
+logs/*.log
+spring.log
+
+# ビルド成果物を無視
+/target/
+
+# コンパイルされたクラスファイルを無視
+*.class
