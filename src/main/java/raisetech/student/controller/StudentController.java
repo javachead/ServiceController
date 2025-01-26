@@ -1,10 +1,13 @@
 package raisetech.student.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +22,7 @@ import raisetech.student.dto.StudentAddResponse;
 import raisetech.student.dto.StudentDeleteResponse;
 import raisetech.student.dto.StudentResponse;
 import raisetech.student.dto.StudentsResponse;
+import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
@@ -28,6 +32,7 @@ import java.util.Optional;
 
 // 学生情報を管理するコントローラークラスです。
 // 基本的なCRUD操作（登録・取得・削除）を提供します。
+@Validated
 @RestController
 @RequestMapping("/api/students")
 public class StudentController {
@@ -61,6 +66,7 @@ public class StudentController {
     @PostMapping
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid StudentDetail studentDetail) {
         logger.info("学生登録リクエストを受け付けました: {}", studentDetail);
+
         try {
             // 学生情報を登録
             Student student = studentDetail.getStudent();
@@ -95,26 +101,23 @@ public class StudentController {
      * @return 指定された学生データを含むレスポンス
      */
     @GetMapping("/{id}")
-    public ResponseEntity<StudentResponse> getStudent(@PathVariable Long id) {
+    public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) @Max(9999) Long id) {
         logger.info("学生取得リクエストを受け付けました。ID: {}", id);
         try {
-            // 学生情報の取得を試みる
-            Optional<Student> optionalStudent = Optional.ofNullable(studentService.getStudentById(id));
-            if (optionalStudent.isEmpty()) {
-                // 学生が見つからない場合の処理
-                logger.warn("指定されたIDの学生が見つかりません。ID: {}", id);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new StudentResponse("指定された学生が見つかりません", null));
-            }
+            // 学生情報の取得
+            Student student = studentService.getStudentById(id);
 
-            // 学生データが見つかった場合の処理
-            Student student = optionalStudent.get();
+            // 学生データが見つかった場合のレスポンス
             logger.info("指定されたIDの学生を取得しました: {}", student);
             return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student));
+        } catch (StudentNotFoundException ex) {
+            // 学生が見つからない場合の処理はCustom Exceptionへ委譲
+            logger.warn("指定されたIDの学生が見つかりません。ID: {}", id, ex);
+            throw ex; // ExceptionはGlobalExceptionHandlerへ委譲
         } catch (Exception e) {
-            // エラー発生時のログ出力とレスポンス
+            // その他のエラー発生時の処理
             logger.error("学生取得中にエラーが発生しました。ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            throw new RuntimeException("サーバーエラーが発生しました", e);
         }
     }
 
@@ -152,26 +155,24 @@ public class StudentController {
      * @return 削除成功または失敗のレスポンス
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable Long id) {
+    public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) @Max(9999) Long id) {
         logger.info("学生削除リクエストを受け付けました。ID: {}", id);
         try {
-            // 指定されたIDの学生データが存在するか確認
-            Optional<Student> optionalStudent = Optional.ofNullable(studentService.getStudentById(id));
-            if (optionalStudent.isEmpty()) {
-                // 学生が見つからない場合のレスポンス
-                logger.warn("指定された学生が見つかりません。ID: {}", id);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new StudentDeleteResponse("指定された学生が見つかりません"));
-            }
-
-            // 学生データの削除処理
+            // 削除処理の呼び出し
             studentService.deleteStudentById(id);
             logger.info("指定された学生を削除しました。ID: {}", id);
+
             return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
+        } catch (StudentNotFoundException ex) {
+            // 存在しない場合は404を返却
+            logger.warn("指定された学生が見つかりませんでした。ID: {}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new StudentDeleteResponse("指定された学生IDが存在しません"));
         } catch (Exception e) {
-            // エラー発生時のログ出力とレスポンス
-            logger.error("学生削除中にエラーが発生しました。ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            // その他の予期しない例外
+            logger.error("削除処理中にエラーが発生しました。ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new StudentDeleteResponse("削除処理に失敗しました"));
         }
     }
 }

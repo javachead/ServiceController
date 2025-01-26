@@ -63,10 +63,13 @@ public class StudentService {
      * @param id 削除対象の学生ID
      */
     @Transactional
-    public void deleteStudentById(Long id) {
-        log.info("学生ID={} を削除します", id);
-        studentRepository.deleteById(id);
-        log.info("学生ID={} を削除しました", id);
+    public void deleteStudentById(Long studentId) {
+        // 学生が存在しない場合は例外をスロー
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new StudentNotFoundException("指定された学生が見つかりません: ID=" + studentId));
+
+        // 対象学生を削除
+        studentRepository.deleteById(student.getId());
     }
 
     /**
