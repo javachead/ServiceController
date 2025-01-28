@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
-import raisetech.student.dto.*;
 import raisetech.student.dto.StudentAddResponse;
 import raisetech.student.dto.StudentDeleteResponse;
 import raisetech.student.dto.StudentResponse;
@@ -28,9 +27,8 @@ import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 
 // 学生情報を管理するコントローラークラスです。
 // 基本的なCRUD操作（登録・取得・削除）を提供します。
@@ -130,40 +128,33 @@ public class StudentController {
      * @return 更新結果のレスポンス
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateStudent(
+    public ResponseEntity<Map<String, Object>> updateStudent(
             @PathVariable @Min(1) @Max(9999) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
 
         logger.info("学生更新リクエストを受け付けました。ID: {}, データ: {}", id, studentDetail);
 
+        Map<String, Object> response = new LinkedHashMap<>();
         try {
-            // 学生データを取得（存在確認のため）
-            studentService.getStudentById(id);
-
-            // 学生情報更新処理
+            // 学生データの更新処理
             Student updatedStudent = studentDetail.getStudent();
-            updatedStudent.setId(id); // 更新する場合もIDは固定
+            updatedStudent.setId(id);
             studentService.updateStudent(updatedStudent);
-            logger.info("学生データを更新しました: {}", updatedStudent);
 
-            // コース情報更新処理
-            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-            studentCourseService.saveCourses(updatedCourses, id); // saveCoursesを利用
-            logger.info("すべてのコースデータを更新または新規登録しました: 学生ID={}, 件数={}", id, updatedCourses.size());
+            response.put("message", "学生データが更新されました");
+            response.put("data", updatedStudent);
 
-            // 正常レスポンスを返却
-            return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent));
+            return ResponseEntity.ok(response);
 
-        } catch (StudentNotFoundException ex) {
-            // 学生が見つからない場合
-            logger.warn("指定されたIDの学生が見つかりませんでした。ID: {}", id, ex);
-            throw ex; // GlobalExceptionHandlerで処理
-        } catch (Exception e) {
-            // その他の予期しないエラーに対応
-            logger.error("学生更新中にエラーが発生しました。ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new ErrorResponse("予期しないエラーが発生しました。管理者に連絡してください", HttpStatus.INTERNAL_SERVER_ERROR)
-            );
+        } catch (StudentNotFoundException e) {
+            response.put("message", "指定された学生IDが見つかりません");
+            response.put("status", HttpStatus.NOT_FOUND.value());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+
+        } catch (Exception ex) {
+            response.put("message", "システムエラーが発生しました");
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
