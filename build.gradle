@@ -46,6 +46,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleafテンプレートエンジン用
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // Tomcatサーバー（実行時依存）
 	implementation 'org.springframework.boot:spring-boot-starter-validation' // 入力検証用
+	implementation 'org.springframework.boot:spring-boot-starter-tomcat' //組み込みTomcatを利用するための依存関係
 
 	// データベース関連依存関係
 	runtimeOnly 'mysql:mysql-connector-java:8.0.33' // MySQL用JDBCドライバ

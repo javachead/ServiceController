@@ -5,52 +5,90 @@
 
     <!-- 共通: 学生テーブルのカラムリスト -->
     <sql id="StudentColumns">
-        id, name, kana_name, nickname, email, area, age, sex, remark, is_deleted
+        id, name, kana_name AS kanaName, nickname, email, area, age, sex, remark, is_deleted AS deleted
     </sql>
 
     <!-- 学生IDを指定して学生情報を取得 -->
     <select id="findById" parameterType="java.lang.Long" resultType="raisetech.student.data.Student">
         SELECT
         <include refid="StudentColumns" />
-        FROM student
-        WHERE id = #{id};
+        FROM
+        student
+        WHERE
+        id = #{id};
     </select>
+
+    <!--動的UPDATE-->
+    <update id="updateStudentById" parameterType="raisetech.student.data.Student">
+        UPDATE student
+        <set>
+            <if test="name != null"> name = #{name}, </if>
+            <if test="kanaName != null"> kana_name = #{kanaName}, </if>
+            <if test="nickname != null"> nickname = #{nickname}, </if>
+            <if test="email != null"> email = #{email}, </if>
+            <if test="area != null"> area = #{area}, </if>
+            <if test="age != null"> age = #{age}, </if>
+            <if test="sex != null"> sex = #{sex}, </if>
+            <if test="remark != null"> remark = #{remark}, </if>
+            <if test="deleted != null"> is_deleted = #{deleted} </if>
+        </set>
+        WHERE id = #{id};
+    </update>
 
     <!-- 全ての学生情報（削除フラグを考慮して）を取得 -->
     <select id="findAllStudents" resultType="raisetech.student.data.Student">
         SELECT
         <include refid="StudentColumns" />
-        FROM student
-        WHERE is_deleted = false;
+        FROM
+        student
+        WHERE
+        is_deleted = false;
     </select>
 
-    <!-- 新しい学生情報を登録 -->
-    <insert id="insertStudent" parameterType="raisetech.student.data.Student">
-        INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted)
-        VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{deleted});
-        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+    <insert id="save" parameterType="raisetech.student.data.Student">
+
+        <!-- IDが存在しない場合に使用する主キー生成 -->
+        <selectKey keyProperty="id" order="AFTER" resultType="long">
             SELECT LAST_INSERT_ID();
         </selectKey>
+
+        <choose>
+            <!-- IDが存在する場合：更新 -->
+            <when test="id != null">
+                UPDATE student
+                SET
+                name = #{name},
+                kana_name = #{kanaName},
+                nickname = #{nickname},
+                email = #{email},
+                area = #{area},
+                age = #{age},
+                sex = #{sex},
+                remark = #{remark},
+                is_deleted = #{deleted}
+                WHERE
+                id = #{id};
+            </when>
+            <!-- IDが存在しない場合：挿入 -->
+            <otherwise>
+                INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted)
+                VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{deleted});
+            </otherwise>
+        </choose>
     </insert>
 
-    <!-- 学生情報を更新 -->
-    <update id="updateStudentDetails" parameterType="raisetech.student.data.Student">
-        UPDATE student
-        SET name = #{name},
-            kana_name = #{kanaName},
-            nickname = #{nickname},
-            email = #{email},
-            area = #{area},
-            age = #{age},
-            sex = #{sex},
-            remark = #{remark},
-            is_deleted = #{deleted}
-        WHERE id = #{id};
-    </update>
+    <!-- INSERT 文 -->
+    <insert id="insertStudent" parameterType="raisetech.student.data.Student">
+        <selectKey keyProperty="id" order="AFTER" resultType="long">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO student (name, kana_name, nickname, email, area, age, sex, remark, is_deleted)
+        VALUES (#{name}, #{kanaName}, #{nickname}, #{email}, #{area}, #{age}, #{sex}, #{remark}, #{deleted})
+    </insert>
 
-    <!-- 学生情報を物理削除 -->
-    <delete id="deleteById" parameterType="java.lang.Long">
-        DELETE FROM student WHERE id = #{id};
-    </delete>
+    <!-- 学生情報を論理削除 -->
+    <update id="deleteById" parameterType="java.lang.Long">
+        UPDATE student SET is_deleted = true WHERE id = #{id};
+    </update>
 
 </mapper>

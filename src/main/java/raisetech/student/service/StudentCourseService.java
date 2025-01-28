@@ -21,7 +21,7 @@ public class StudentCourseService {
 
     // 学生IDに基づくコース情報を取得
     public List<StudentCourse> findByStudentId(Long studentId) {
-        log.info("学生ID={} に関連するコースを取得予定", studentId);
+        log.info("学生ID={} のコースを取得します。", studentId);
         return studentCourseRepository.findByStudentId(studentId);
     }
 
@@ -48,7 +48,7 @@ public class StudentCourseService {
      * 動的な更新要件には対応していません。
      */
     public List<StudentCourse> updateByStudentId(Integer studentId) {
-        log.info("学生ID {} のすべてのコース名を一括変更します。", studentId);
+        log.info("学生ID={} のコース情報を一括更新します", studentId);
 
         List<StudentCourse> courses = studentCourseRepository.findByStudentId(studentId.longValue());
 
@@ -57,7 +57,7 @@ public class StudentCourseService {
             studentCourseRepository.updateCourse(course);
         });
 
-        log.info("コース名の更新が完了しました。更新件数: {}", courses.size());
+        log.info("コースの更新完了：更新数: {}", courses.size());
         return courses;
     }
 
@@ -68,31 +68,18 @@ public class StudentCourseService {
      * @param existingCourses 既存コースのリスト
      * @param studentId 学生ID (新規登録の際に使用)
      */
-    private void handleCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses, Long studentId) {
-        for (StudentCourse newCourse : newCourses) {
-            Optional.ofNullable(newCourse.getId())
-                    .ifPresentOrElse(
-                            id -> {
-                                // 既存の更新対象
-                                log.info("更新対象のコースID: {}", id);
-                                StudentCourse existingCourse = existingCourses.stream()
-                                        .filter(c -> c.getId().equals(id))
-                                        .findFirst()
-                                        .orElseThrow(() -> new IllegalArgumentException("該当するコースが見つかりません: ID=" + id));
-
-                                existingCourse.setCourseName(newCourse.getCourseName());
-                                existingCourse.setCourseStartAt(newCourse.getCourseStartAt());
-                                existingCourse.setCourseEndAt(newCourse.getCourseEndAt());
-                                studentCourseRepository.updateCourse(existingCourse);
-                            },
-                            () -> {
-                                // 新規登録
-                                log.info("新しいコースを登録: {}", newCourse);
-                                newCourse.setStudentId(studentId); // 学生IDを紐付け
-                                studentCourseRepository.insertCourse(newCourse);
-                            }
-                    );
-        }
+    private void processCourses(List<StudentCourse> targetCourses, List<StudentCourse> existingCourses,
+                                Long studentId, Merger<StudentCourse> merger) {
+        targetCourses.forEach(course -> {
+            if (course.getId() == null) {
+                log.info("新規登録コース: {}", course);
+                course.setStudentId(studentId);
+                studentCourseRepository.insertCourse(course);
+            } else {
+                log.info("更新対象コース: {}", course);
+                merger.merge(existingCourses, course);
+            }
+        });
     }
 
     /**
@@ -104,16 +91,13 @@ public class StudentCourseService {
      * @param existingCourses 既存コースのリスト
      */
     private void removeUnusedCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses) {
-        for (StudentCourse existingCourse : existingCourses) {
-            boolean shouldRemove = newCourses.stream()
-                    .noneMatch(c -> Optional.ofNullable(c.getId())
-                            .filter(id -> id.equals(existingCourse.getId()))
-                            .isPresent());
-            if (shouldRemove) {
-                log.info("削除するコースID: {}", existingCourse.getId());
-                studentCourseRepository.deleteCourse(existingCourse.getId());
-            }
-        }
+        existingCourses.stream()
+                .filter(existingCourse -> newCourses.stream()
+                        .noneMatch(c -> existingCourse.getId().equals(c.getId())))
+                .forEach(unusedCourse -> {
+                    log.info("削除対象コースID: {}", unusedCourse.getId());
+                    studentCourseRepository.deleteCourse(unusedCourse.getId());
+                });
     }
 
     /**
@@ -132,11 +116,28 @@ public class StudentCourseService {
         List<StudentCourse> existingCourses = studentCourseRepository.findByStudentId(studentId);
 
         // 更新または新規登録
-        handleCourses(courses, existingCourses, studentId);
+        processCourses(courses, existingCourses, studentId, (existingList, course) -> {
+            existingList.stream()
+                    .filter(existing -> existing.getId().equals(course.getId()))
+                    .findFirst()
+                    .ifPresentOrElse(existing -> {
+                        existing.setCourseName(course.getCourseName());
+                        existing.setCourseStartAt(course.getCourseStartAt());
+                        existing.setCourseEndAt(course.getCourseEndAt());
+                        studentCourseRepository.updateCourse(existing);
+                    }, () -> {
+                        throw new IllegalArgumentException("該当するコースIDが見つかりません: ID=" + course.getId());
+                    });
+        });
 
         // 削除対象のコースを判定して削除
         removeUnusedCourses(courses, existingCourses);
+        log.info("コース保存および削除処理完了。");
+    }
 
-        log.info("すべての処理が完了しました。");
+    // 関数型インターフェース（汎用化）
+    @FunctionalInterface
+    interface Merger<T> {
+        void merge(List<T> existingList, T target);
     }
 }

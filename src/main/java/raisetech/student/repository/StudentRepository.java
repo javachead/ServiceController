@@ -22,16 +22,10 @@ public interface StudentRepository {
     List<Student> findAllStudents();
 
     /**
-     * 学生情報を追加。
-     * @param student 登録する学生オブジェクト
+     * 学生情報の新規登録または更新。
+     * @param student 対象の学生データオブジェクト
      */
-    void insertStudent(Student student);
-
-    /**
-     * 学生情報を更新。
-     * @param student 更新対象の学生データオブジェクト
-     */
-    void updateStudentDetails(Student student);
+    void save(Student student);
 
     /**
      * 学生情報を削除。

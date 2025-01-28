@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
+import raisetech.student.dto.*;
 import raisetech.student.dto.StudentAddResponse;
 import raisetech.student.dto.StudentDeleteResponse;
 import raisetech.student.dto.StudentResponse;
@@ -70,7 +72,7 @@ public class StudentController {
         try {
             // 学生情報を登録
             Student student = studentDetail.getStudent();
-            studentService.saveStudent(student);
+            studentService.saveStudentAndCourses(student);
             logger.info("学生データを保存しました: {}", student);
 
             // コース情報を登録
@@ -122,6 +124,50 @@ public class StudentController {
     }
 
     /**
+     * 指定されたIDの学生データを更新します。
+     * @param id 更新対象の学生のID
+     * @param studentDetail 更新する学生情報（リクエストボディ）
+     * @return 更新結果のレスポンス
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateStudent(
+            @PathVariable @Min(1) @Max(9999) Long id,
+            @RequestBody @Valid StudentDetail studentDetail) {
+
+        logger.info("学生更新リクエストを受け付けました。ID: {}, データ: {}", id, studentDetail);
+
+        try {
+            // 学生データを取得（存在確認のため）
+            studentService.getStudentById(id);
+
+            // 学生情報更新処理
+            Student updatedStudent = studentDetail.getStudent();
+            updatedStudent.setId(id); // 更新する場合もIDは固定
+            studentService.updateStudent(updatedStudent);
+            logger.info("学生データを更新しました: {}", updatedStudent);
+
+            // コース情報更新処理
+            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
+            studentCourseService.saveCourses(updatedCourses, id); // saveCoursesを利用
+            logger.info("すべてのコースデータを更新または新規登録しました: 学生ID={}, 件数={}", id, updatedCourses.size());
+
+            // 正常レスポンスを返却
+            return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent));
+
+        } catch (StudentNotFoundException ex) {
+            // 学生が見つからない場合
+            logger.warn("指定されたIDの学生が見つかりませんでした。ID: {}", id, ex);
+            throw ex; // GlobalExceptionHandlerで処理
+        } catch (Exception e) {
+            // その他の予期しないエラーに対応
+            logger.error("学生更新中にエラーが発生しました。ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ErrorResponse("予期しないエラーが発生しました。管理者に連絡してください", HttpStatus.INTERNAL_SERVER_ERROR)
+            );
+        }
+    }
+
+    /**
      * 全ての学生情報を取得します。
      * @return 学生データの一覧を含むレスポンス
      */
@@ -162,7 +208,7 @@ public class StudentController {
             studentService.deleteStudentById(id);
             logger.info("指定された学生を削除しました。ID: {}", id);
 
-            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
+            return ResponseEntity.ok(new StudentDeleteResponse("学生が論理削除されました"));
         } catch (StudentNotFoundException ex) {
             // 存在しない場合は404を返却
             logger.warn("指定された学生が見つかりませんでした。ID: {}", id);

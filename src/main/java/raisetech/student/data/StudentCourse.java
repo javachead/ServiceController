@@ -1,6 +1,7 @@
 package raisetech.student.data;
 
 import java.time.LocalDate;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,9 +18,14 @@ import lombok.ToString;
 
 public class StudentCourse {
 
-    private Long id;
-    private Long studentId;
-    private String courseName;
-    private LocalDate courseStartAt;
-    private LocalDate courseEndAt;
+    private Long id; // 自動生成されることを想定しているためバリデーション不要
+
+    private Long studentId; // 学生ID、他の関連情報に依存するためここではバリデーションを省略
+
+    @NotBlank(message = "コース名は必須です")
+    private String courseName; // 登録内容に必須とする
+
+    private LocalDate courseStartAt; // 開始日
+
+    private LocalDate courseEndAt; // 終了日
 }

@@ -3,7 +3,6 @@ package raisetech.student.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
@@ -36,35 +35,6 @@ public class StudentDetailService {
                     return buildStudentDetail(student, courses); // buildStudentDetail を呼び出す
                 })
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 特定の学生情報を更新する（学生データと紐付くコースデータをまとめて更新）
-     * @param student 更新対象の学生オブジェクト
-     * @return 更新後の学生詳細情報（リストで返却）
-     */
-    @Transactional // トランザクション整合性を保証
-    public List<StudentDetail> updateStudentDetails(Student student) {
-        // 学生情報を更新
-        updateStudent(student);
-
-        // 紐付くコース情報を更新
-        List<StudentCourse> updatedCourses = updateStudentCourses(student);
-
-        // 更新済みの内容から学生詳細情報を作成
-        return List.of(buildStudentDetail(student, updatedCourses));
-    }
-
-    /**
-     * 学生情報を個別に更新
-     * @param student 更新対象の学生オブジェクト
-     */
-    private void updateStudent(Student student) {
-        try {
-            studentRepository.updateStudentDetails(student);
-        } catch (Exception e) {
-            throw new RuntimeException("学生情報の更新中にエラーが発生しました: " + student.getId(), e);
-        }
     }
 
     /**

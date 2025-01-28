@@ -1,107 +1,110 @@
 package raisetech.student.service;
 
-import jakarta.validation.Valid;
-import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.validation.Valid; // Controllerで利用
+import lombok.extern.slf4j.Slf4j;
 import raisetech.student.data.Student;
+import raisetech.student.data.StudentCourse;
 import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.repository.StudentRepository;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 @Slf4j
+@Transactional
 public class StudentService {
 
     private final StudentRepository studentRepository;
+    private final StudentCourseService studentCourseService;
 
+    // コンストラクタ（依存性注入）
     public StudentService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
         this.studentRepository = studentRepository;
+        this.studentCourseService = studentCourseService;
+    }
+
+    /**
+     * 学生情報をIDで取得するメソッド。
+     * @param id 学生ID
+     * @return 指定されたIDに一致する学生情報
+     * @throws StudentNotFoundException 該当する学生が存在しない場合
+     */
+    public Student getStudentById(Long id) {
+        return studentRepository.findById(id)
+                .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID = " + id));
     }
 
     /**
      * 学生情報を更新するメソッド。
-     * 注意:
-     * - 更新時に、学生ID（`student.getId()`）が必須です。存在しない場合は例外がスローされます。
-     * - 名前とメールアドレスには検証ロジックが適用されます。
-     * @param id 学生ID
-     * @param student 学生の更新用データ
+     * @param updatedStudent 更新対象の学生オブジェクト
+     * @throws StudentNotFoundException 該当する学生が存在しない場合
      */
-    @Transactional
-    public void updateStudentDetails(Long id, @Valid Student student) {
-        Optional.ofNullable(student.getId())
-                .orElseThrow(() -> {
-                    log.error("学生情報の更新にはIDが必要です。");
-                    return new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
-                });
+    public void updateStudent(Student updatedStudent) {
+        Student existingStudent = studentRepository.findById(updatedStudent.getId())
+                .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID=" + updatedStudent.getId()));
 
-        log.info("updateStudentDetailsを実行します。ID={}, データ={}", student.getId(), student);
+        // 定義済みフィールドの更新
+        existingStudent.setName(updatedStudent.getName());
+        existingStudent.setEmail(updatedStudent.getEmail());
+        existingStudent.setAge(updatedStudent.getAge());
+        existingStudent.setKanaName(updatedStudent.getKanaName());
+        existingStudent.setArea(updatedStudent.getArea());
 
-        Optional.ofNullable(student.getName())
-                .filter(name -> !name.trim().isEmpty())
-                .orElseThrow(() -> {
-                    log.error("学生名が無効です: {}", student.getName());
-                    return new IllegalArgumentException("学生名は必須です");
-                });
+        // 任意フィールドの更新（Optional を活用して null チェックを簡略化）
+        Optional.ofNullable(updatedStudent.getNickname()).ifPresent(existingStudent::setNickname);
+        Optional.ofNullable(updatedStudent.getSex()).ifPresent(existingStudent::setSex);
+        Optional.ofNullable(updatedStudent.getRemark()).ifPresent(existingStudent::setRemark);
 
-        Optional.ofNullable(student.getEmail())
-                .filter(email -> !email.trim().isEmpty())
-                .orElseThrow(() -> {
-                    log.error("メールアドレスが無効です: {}", student.getEmail());
-                    return new IllegalArgumentException("メールアドレスは必須です");
-                });
+        // isDeleted フィールドの直接設定
+        existingStudent.setDeleted(updatedStudent.isDeleted());
 
-        studentRepository.updateStudentDetails(student);
-
-        log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), student);
+        // 更新後のデータを保存する
+        studentRepository.save(existingStudent);
     }
 
     /**
      * 指定されたIDで学生情報を削除する。
-     * - `deleteById` メソッドの動作は物理削除である点に注意。
-     * - 削除対象の学生に紐づくコース情報が自動的に削除されるかどうかはリポジトリ側の実装に依存します。
-     * @param id 削除対象の学生ID
+     * @param studentId 削除対象の学生ID
+     * @throws StudentNotFoundException 該当する学生が存在しない場合
      */
-    @Transactional
     public void deleteStudentById(Long studentId) {
-        // 学生が存在しない場合は例外をスロー
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("指定された学生が見つかりません: ID=" + studentId));
-
-        // 対象学生を削除
-        studentRepository.deleteById(student.getId());
+        studentRepository.deleteById(studentId);
     }
 
     /**
-     * IDが空の場合は新規作成、存在する場合は更新処理を行う。
-     * - 新規作成時は挙動がシンプルで変更点なし。
-     * - 更新時には `updateStudentDetails` を介するため、検証ロジックやロギングが一貫する。
+     * 学生情報およびコース情報を保存または更新するメソッド。
      * @param student 保存対象の学生情報
      */
-    public void saveStudent(Student student) {
+    public void saveStudentAndCourses(Student student) {
+        saveOrUpdateStudent(student);       // 学生情報の保存または更新
+        saveOrUpdateStudentCourses(student); // 関連コースの保存または更新
+    }
+
+    /**
+     * 学生情報を保存または更新するプライベートメソッド。
+     * @param student 更新または保存する学生情報
+     */
+    private void saveOrUpdateStudent(Student student) {
         Optional.ofNullable(student.getId())
                 .ifPresentOrElse(
-                        id -> updateStudentDetails(id, student), // IDがある場合は更新
-                        () -> studentRepository.insertStudent(student) // IDが空の場合は新規作成
+                        id -> updateStudent(student), // IDがあれば更新処理
+                        () -> studentRepository.save(student) // IDがなければ新規登録
                 );
     }
 
     /**
-     * 指定されたIDに対応する学生情報を取得する。
-     * 注意:
-     * - 学生情報が見つからない場合、または削除フラグが立っている場合は例外がスローされます。
-     * @param id 学生ID
-     * @return 学生情報
+     * 学生に関連するコース情報を保存または更新するメソッド。
+     * @param student 保存または更新対象の学生情報
      */
-    public Student getStudentById(Long id) {
-        log.info("学生ID={} の情報を取得します", id);
-
-        return studentRepository.findById(id)
-                .filter(student -> !student.isDeleted()) // 削除フラグが立っていないか確認
-                .orElseThrow(() -> {
-                    log.warn("指定されたIDの学生が見つかりません。または削除されています。ID: {}", id);
-                    // カスタム例外をスローするように変更
-                    return new StudentNotFoundException("指定されたIDの学生が見つかりません: ID=" + id);
-                });
+    private void saveOrUpdateStudentCourses(Student student) {
+        Optional.ofNullable(student.getStudentCourses())
+                .filter(courses -> !courses.isEmpty()) // 空でない場合のみ処理
+                .ifPresent(courses -> studentCourseService.saveCourses(courses, student.getId()));
     }
 }
