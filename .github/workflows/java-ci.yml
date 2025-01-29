@@ -30,17 +30,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Grant execute permission for Gradlew
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle
         run: ./gradlew build
-
-      # 作成したファイルをGitHubにプッシュすると、ワークフローが自動的に有効になります：
-      # main.yml をステージング
-      #　git add .github/workflows/main.yml
-
-      # 理由を明記してコミットを作成
-      #　git commit -m "Add GitHub Actions workflow"
-
-      # 修正をプッシュ
-      #　git push origin main
-
-      # 無料枠があるが、大規模プロジェクトでは課金が発生する場合がある
