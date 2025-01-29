@@ -1,4 +1,4 @@
-name: Java CI
+name: Java CI with CodeQL
 
 on:
   push:
@@ -9,29 +9,27 @@ on:
       - main
 
 jobs:
-  build:
+  analyze:
+    name: Analyze code with CodeQL
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up JDK
+      - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          languages: java
 
-      - name: Grant execute permission for Gradlew
-        run: chmod +x ./gradlew
+      - name: Build code
+        run: ./gradlew build --info
 
-      - name: Build with Gradle
-        run: ./gradlew build
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
