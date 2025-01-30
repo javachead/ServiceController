@@ -136,15 +136,18 @@ public class StudentController {
         logger.info("学生更新リクエストを受け付けました。ID: {}, データ: {}", id, studentDetail);
 
         try {
-            // 学生データの更新処理
+            // 更新対象学生の情報を取得して設定
             Student updatedStudent = studentDetail.getStudent();
-            updatedStudent.setId(id);
-            studentService.updateStudent(updatedStudent);
+            updatedStudent.setId(id); // IDを設定（既存データ識別のために必須）
 
-            // コース情報更新処理
+            // リクエストボディから取得したコース情報のIDを学生と関連付け
             List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-            studentCourseService.saveCourses(updatedCourses, id); // saveCoursesを利用
-            logger.info("すべてのコースデータを更新または新規登録しました: 学生ID={}, 件数={}", id, updatedCourses.size());
+            updatedCourses.forEach(course -> course.setStudentId(id));
+
+            // 学生情報とコース情報をサービスで統合更新・保存
+            studentService.saveStudentAndCourses(updatedStudent);
+
+            logger.info("学生ID={} のデータを更新しました。コース件数={}", id, updatedCourses.size());
 
             // 正常レスポンスを返却
             return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent));
@@ -152,7 +155,13 @@ public class StudentController {
         } catch (StudentNotFoundException ex) {
             // 学生が見つからない場合、例外スロー
             logger.warn("指定されたIDの学生が見つかりませんでした。ID: {}", id, ex);
-            throw ex; // GlobalExceptionHandlerで処理
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new StudentResponse("指定された学生IDは存在しません", null));
+        } catch (Exception e) {
+            // その他のエラー処理
+            logger.error("学生更新処理中にエラーが発生しました。ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new StudentResponse("学生更新処理に失敗しました", null));
         }
     }
 
