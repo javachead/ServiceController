@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
+import raisetech.student.dto.ErrorResponse;
 import raisetech.student.dto.StudentAddResponse;
 import raisetech.student.dto.StudentDeleteResponse;
 import raisetech.student.dto.StudentResponse;
@@ -101,7 +102,7 @@ public class StudentController {
      * @return 指定された学生データを含むレスポンス
      */
     @GetMapping("/{id}")
-    public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) @Max(9999) Long id) {
+    public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
         logger.info("学生取得リクエストを受け付けました。ID: {}", id);
         try {
             // 学生情報の取得
@@ -123,38 +124,35 @@ public class StudentController {
 
     /**
      * 指定されたIDの学生データを更新します。
-     * @param id 更新対象の学生のID
+     * @param id 更新対象の学生のID（URLパス変数）
      * @param studentDetail 更新する学生情報（リクエストボディ）
      * @return 更新結果のレスポンス
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateStudent(
-            @PathVariable @Min(1) @Max(9999) Long id,
+    public ResponseEntity<StudentResponse> updateStudent(
+            @PathVariable @Min(1) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
 
         logger.info("学生更新リクエストを受け付けました。ID: {}, データ: {}", id, studentDetail);
 
-        Map<String, Object> response = new LinkedHashMap<>();
         try {
             // 学生データの更新処理
             Student updatedStudent = studentDetail.getStudent();
             updatedStudent.setId(id);
             studentService.updateStudent(updatedStudent);
 
-            response.put("message", "学生データが更新されました");
-            response.put("data", updatedStudent);
+            // コース情報更新処理
+            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
+            studentCourseService.saveCourses(updatedCourses, id); // saveCoursesを利用
+            logger.info("すべてのコースデータを更新または新規登録しました: 学生ID={}, 件数={}", id, updatedCourses.size());
 
-            return ResponseEntity.ok(response);
+            // 正常レスポンスを返却
+            return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent));
 
-        } catch (StudentNotFoundException e) {
-            response.put("message", "指定された学生IDが見つかりません");
-            response.put("status", HttpStatus.NOT_FOUND.value());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-
-        } catch (Exception ex) {
-            response.put("message", "システムエラーが発生しました");
-            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (StudentNotFoundException ex) {
+            // 学生が見つからない場合、例外スロー
+            logger.warn("指定されたIDの学生が見つかりませんでした。ID: {}", id, ex);
+            throw ex; // GlobalExceptionHandlerで処理
         }
     }
 
@@ -199,7 +197,8 @@ public class StudentController {
             studentService.deleteStudentById(id);
             logger.info("指定された学生を削除しました。ID: {}", id);
 
-            return ResponseEntity.ok(new StudentDeleteResponse("学生が論理削除されました"));
+            // クライアントに論理削除の具体的な説明を避ける
+            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
         } catch (StudentNotFoundException ex) {
             // 存在しない場合は404を返却
             logger.warn("指定された学生が見つかりませんでした。ID: {}", id);

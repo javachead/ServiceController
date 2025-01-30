@@ -64,12 +64,13 @@ public class StudentCourseService {
     /**
      * 新規登録・既存更新のコース処理
      * このメソッドはリストで渡されたコースの中で、新しいものを登録し、既存のものを更新します。
-     * @param newCourses 新規または更新対象のコースリスト
+     * @param targetCourses 新規または更新対象のコースリスト
      * @param existingCourses 既存コースのリスト
      * @param studentId 学生ID (新規登録の際に使用)
+     * @param courseUpdater 新規・更新処理を行うための関数型インターフェース
      */
-    private void processCourses(List<StudentCourse> targetCourses, List<StudentCourse> existingCourses,
-                                Long studentId, Merger<StudentCourse> merger) {
+    private void handleCourses(List<StudentCourse> targetCourses, List<StudentCourse> existingCourses,
+                               Long studentId, CourseUpdater<StudentCourse> courseUpdater) {
         targetCourses.forEach(course -> {
             if (course.getId() == null) {
                 log.info("新規登録コース: {}", course);
@@ -77,7 +78,8 @@ public class StudentCourseService {
                 studentCourseRepository.insertCourse(course);
             } else {
                 log.info("更新対象コース: {}", course);
-                merger.merge(existingCourses, course);
+                // CourseUpdaterのmergeメソッドを使用
+                courseUpdater.merge(existingCourses, course);
             }
         });
     }
@@ -116,7 +118,7 @@ public class StudentCourseService {
         List<StudentCourse> existingCourses = studentCourseRepository.findByStudentId(studentId);
 
         // 更新または新規登録
-        processCourses(courses, existingCourses, studentId, (existingList, course) -> {
+        handleCourses(courses, existingCourses, studentId, (existingList, course) -> {
             existingList.stream()
                     .filter(existing -> existing.getId().equals(course.getId()))
                     .findFirst()
@@ -137,7 +139,7 @@ public class StudentCourseService {
 
     // 関数型インターフェース（汎用化）
     @FunctionalInterface
-    interface Merger<T> {
+    interface CourseUpdater<T> {
         void merge(List<T> existingList, T target);
     }
 }

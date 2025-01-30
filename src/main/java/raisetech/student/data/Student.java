@@ -1,5 +1,6 @@
 package raisetech.student.data;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.validation.constraints.Email;
@@ -25,21 +26,24 @@ import java.util.List;
  */
 public class Student {
 
-    private Long id; // ID は通常バリデーション不要
+    @Min(value = 1, message = "IDは1以上である必要があります")
+    private Long id; // ID は数値型に適したバリデーションを使用
 
     @NotBlank(message = "名前は必須です")
     private String name;
 
     @NotBlank(message = "名前（カナ）は必須です")
-    @Pattern(regexp = "^[ァ-ンヴー\\s]+$", message = "名前（カナ）は全角カタカナのみ使用できます")
+    @Pattern(regexp = "^[\\u30A0-\\u30FF]+$", message = "名前（カナ）は全角カタカナのみ使用できます")
     private String kanaName;
 
-    private String nickname; // ニックネームは任意と設定
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "ニックネームは半角英数字のみ使用できます")
+    private String nickname; // ニックネームに形式制約を追加
 
     @NotBlank(message = "メールアドレスは必須です")
     @Email(message = "メールアドレスの形式が正しくありません")
     private String email;
 
+    @Pattern(regexp = "^(.*[都道府県])$", message = "住所エリアには「都」「道」「府」「県」を含めてください")
     @NotBlank(message = "住所（エリア）は必須です")
     private String area;
 
@@ -52,8 +56,13 @@ public class Student {
 
     private String remark; // 備考は任意
 
-    private boolean isDeleted; // 論理削除フラグのためバリデーション不要
+    @NotNull(message = "isDeletedフラグは必須です")
+    private Boolean deleted;
 
     // 学生が受講しているコースのリストを保持
     private List<StudentCourse> studentCourses;
 }
+
+
+
+
