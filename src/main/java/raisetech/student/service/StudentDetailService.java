@@ -11,13 +11,19 @@ import raisetech.student.repository.StudentRepository;
 @Service
 public class StudentDetailService {
 
-    private final StudentRepository studentRepository; // 学生関連のデータアクセス (リポジトリ)
-    private final StudentCourseService studentCourseService; // 学生コース関連のサービス
+    private final StudentRepository studentRepository;
+    private final StudentCourseService studentCourseService;
+    private final StudentService studentService;
 
     // コンストラクタによる依存性注入
-    public StudentDetailService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
+    public StudentDetailService(
+            StudentRepository studentRepository,
+            StudentCourseService studentCourseService,
+            StudentService studentService // 新しい依存性を追加
+    ) {
         this.studentRepository = studentRepository;
         this.studentCourseService = studentCourseService;
+        this.studentService = studentService; // インスタンスを初期化
     }
 
     /**
@@ -38,15 +44,18 @@ public class StudentDetailService {
     }
 
     /**
-     * 学生の紐付くコース情報を個別に更新
-     * @param student 学生オブジェクト
-     * @return 更新後の学生コース情報リスト
+     * 学生情報と紐づくコース情報を保存または更新するメソッド。
+     * 学生情報を保存した後、そのIDを基に関連するコース情報も一括で保存または更新する。
+     * @param studentDetail 学生情報とコース情報を含むオブジェクト
      */
-    private List<StudentCourse> updateStudentCourses(Student student) {
-        try {
-            return studentCourseService.updateByStudentId(Math.toIntExact(student.getId()));
-        } catch (Exception e) {
-            throw new RuntimeException("紐付くコース情報の更新中にエラーが発生しました: " + student.getId(), e);
+    public void saveStudentAndCourses(StudentDetail studentDetail) {
+        // 学生情報は StudentService を利用して保存
+        Student savedStudent = studentService.saveStudent(studentDetail.getStudent());
+
+        // コース情報は StudentCourseService に委譲
+        List<StudentCourse> courses = studentDetail.getStudentCourses();
+        if (courses != null && !courses.isEmpty()) {
+            studentCourseService.saveCourses(courses, savedStudent.getId());
         }
     }
 

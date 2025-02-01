@@ -1,7 +1,10 @@
 package raisetech.student.service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,42 +26,6 @@ public class StudentCourseService {
     public List<StudentCourse> findByStudentId(Long studentId) {
         log.info("学生ID={} のコースを取得します。", studentId);
         return studentCourseRepository.findByStudentId(studentId);
-    }
-
-    // 新規コースを保存または更新する
-    public void saveCourse(StudentCourse course) {
-        Optional.ofNullable(course.getId())
-                .ifPresentOrElse(
-                        id -> {
-                            // 既存コースが更新対象
-                            log.info("コースID={} を更新します: {}", id, course);
-                            studentCourseRepository.updateCourse(course);
-                        },
-                        () -> {
-                            // 新規登録
-                            log.info("新しいコースを登録します: {}", course);
-                            studentCourseRepository.insertCourse(course);
-                        }
-                );
-    }
-
-    /**
-     * 学生IDに基づきコース名を一括変更。
-     * 注意: コース名がハードコーディングされており、すべて"Updated Course Name"に更新されるため、
-     * 動的な更新要件には対応していません。
-     */
-    public List<StudentCourse> updateByStudentId(Integer studentId) {
-        log.info("学生ID={} のコース情報を一括更新します", studentId);
-
-        List<StudentCourse> courses = studentCourseRepository.findByStudentId(studentId.longValue());
-
-        courses.forEach(course -> {
-            course.setCourseName("Updated Course Name");
-            studentCourseRepository.updateCourse(course);
-        });
-
-        log.info("コースの更新完了：更新数: {}", courses.size());
-        return courses;
     }
 
     /**
@@ -93,13 +60,19 @@ public class StudentCourseService {
      * @param existingCourses 既存コースのリスト
      */
     private void removeUnusedCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses) {
-        existingCourses.stream()
-                .filter(existingCourse -> newCourses.stream()
-                        .noneMatch(c -> existingCourse.getId().equals(c.getId())))
-                .forEach(unusedCourse -> {
-                    log.info("削除対象コースID: {}", unusedCourse.getId());
-                    studentCourseRepository.deleteCourse(unusedCourse.getId());
-                });
+        // 新しいコースのIDをセットとして保持
+        Set<Long> newCourseIds = newCourses.stream()
+                .map(StudentCourse::getId)
+                .filter(Objects::nonNull) // IDがnullでないものだけ処理
+                .collect(Collectors.toSet());
+
+        // 削除対象のコースを取得し、一括削除
+        List<Long> toDeleteIds = existingCourses.stream()
+                .map(StudentCourse::getId)
+                .filter(id -> !newCourseIds.contains(id))
+                .toList();
+
+        toDeleteIds.forEach(studentCourseRepository::deleteCourse);
     }
 
     /**

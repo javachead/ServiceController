@@ -33,19 +33,6 @@ public interface StudentCourseRepository {
      */
     void updateCourse(StudentCourse course);
 
-    // ---------------- 学生IDに基づいて複数のコース情報を更新 ----------------
-    /**
-     * 特定の学生に紐づく全てのコースをまとめて更新。
-     * @param studentId 学生ID
-     * @param courseName 変更後のコース名
-     * @param courseStartAt 変更後のコース開始日
-     * @param courseEndAt 変更後のコース終了日
-     */
-    void updateCoursesByStudentId(@Param("studentId") Long studentId,
-                                  @Param("courseName") String courseName,
-                                  @Param("courseStartAt") String courseStartAt,
-                                  @Param("courseEndAt") String courseEndAt);
-
     // ---------------- コース削除 ----------------
 
     /**

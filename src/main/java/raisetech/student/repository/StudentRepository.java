@@ -25,11 +25,11 @@ public interface StudentRepository {
      * 学生情報の新規登録または更新。
      * @param student 対象の学生データオブジェクト
      */
-    void save(Student student);
+    Student save(Student student);
 
     /**
-     * 学生情報を削除。
-     * @param id 削除する学生のID
+     * ID が一致する学生情報を削除。
+     * @param id 削除する学生の ID
      */
     void deleteById(Long id);
 }
