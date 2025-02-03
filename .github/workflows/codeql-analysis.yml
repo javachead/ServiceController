@@ -1,4 +1,4 @@
-name: "CodeQL Analysis"
+name: CodeQL Analysis
 
 on:
   push:
@@ -29,6 +29,14 @@ jobs:
       # リポジトリのチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
+      
+      # Javaのセットアップ
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
       
       # CodeQLの初期化（v3に変更）
       - name: Initialize CodeQL

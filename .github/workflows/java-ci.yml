@@ -30,7 +30,7 @@ jobs:
           languages: java
       
       - name: Build code
-        run: ./gradlew build --info
+        run: ./gradlew build --info --stacktrace
       
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
