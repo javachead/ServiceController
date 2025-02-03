@@ -3,12 +3,10 @@ name: CodeQL Analysis
 on:
   push:
     branches: [ main ]
-  
   pull_request:
     branches: [ main ]
-  
   schedule:
-    - cron: "0 0 * * 1" # 毎週月曜日に実行
+    - cron: "0 0 * * 1" # 毎週月曜日のUTC 00:00 (日本時間で朝9:00)
 
 jobs:
   analyze:
@@ -38,16 +36,16 @@ jobs:
           java-version: '17'
           cache: 'gradle'
       
-      # CodeQLの初期化（v3に変更）
+      # CodeQLの初期化
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
       
-      # プロジェクトのビルド（Gradleの場合）
+      # プロジェクトのビルド
       - name: Build the project
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon --info --stacktrace
       
-      # CodeQL解析の実行（v3に変更）
+      # CodeQL解析の実行
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
