@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  
   pull_request:
     branches:
       - main
@@ -12,24 +13,24 @@ jobs:
   analyze:
     name: Analyze code with CodeQL
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
-
+      
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
-
+      
       - name: Build code
         run: ./gradlew build --info
-
+      
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

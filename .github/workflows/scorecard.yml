@@ -4,7 +4,9 @@ on:
   schedule:
     # 毎週月曜日に実行
     - cron: "0 0 * * 1"
+  
   workflow_dispatch: # 手動で実行可能にするトリガー
+  
   push:
     branches:
       - main
@@ -12,32 +14,32 @@ on:
 jobs:
   scorecards:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Run Scorecards
         uses: ossf/scorecard-action@v2
         with:
           results_file: results.sarif
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Upload results to code scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
 
+# 設定ファイルをステージング
+# git add .github/workflows/scorecard.yml
 
-          # 設定ファイルをステージング
-          # git add .github/workflows/scorecard.yml
+# 設定ファイルの追加理由をコミット
+# git commit -m "Add Scorecards workflow"
 
-          # 設定ファイルの追加理由をコミット
-          #git commit -m "Add Scorecards workflow"
+# リポジトリにプッシュ
+# git push origin mainIDEの設定で保存時に空行が含まれるように設定
 
-          # リポジトリにプッシュ
-          #git push origin main
-
-          #env:
-          #GITHUB_TOKEN: ${{ secrets.PAT }}
+# コメントアウトされた環境変数例
+# env:
+# GITHUB_TOKEN: ${{ secrets.PAT }}

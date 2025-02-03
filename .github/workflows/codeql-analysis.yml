@@ -3,8 +3,10 @@ name: "CodeQL Analysis"
 on:
   push:
     branches: [ main ]
+  
   pull_request:
     branches: [ main ]
+  
   schedule:
     - cron: "0 0 * * 1" # 毎週月曜日に実行
 
@@ -12,32 +14,32 @@ jobs:
   analyze:
     name: Analyze code with CodeQL
     runs-on: ubuntu-latest
-
+    
     permissions:
       actions: read
       contents: read
       security-events: write
-
+    
     strategy:
       fail-fast: false
       matrix:
         language: [ 'java' ] # 他の言語を追加可能
-
+    
     steps:
       # リポジトリのチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
-
+      
       # CodeQLの初期化（v3に変更）
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-
+      
       # プロジェクトのビルド（Gradleの場合）
       - name: Build the project
         run: ./gradlew build --no-daemon
-
+      
       # CodeQL解析の実行（v3に変更）
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
