@@ -1,17 +1,13 @@
 package raisetech.student.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourse;
 import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.repository.StudentRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -63,9 +59,12 @@ public class StudentService {
      * 新しい学生情報を保存します。
      */
     @Transactional
-    public Student saveStudent(Student student) {
-        log.info("新しい学生情報を保存します: {}", student);
-        return studentRepository.save(student);
+    public Student saveStudent(Student newStudent) {
+        if (newStudent.getId() != null) {
+            throw new IllegalArgumentException("新規登録にはIDを指定しないでください: ID = " + newStudent.getId());
+        }
+        log.info("新しい学生情報を登録します: {}", newStudent);
+        return studentRepository.save(newStudent);
     }
 
     /**

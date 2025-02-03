@@ -1,29 +1,27 @@
 package raisetech.student.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
 import raisetech.student.repository.StudentRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class StudentDetailService {
 
     private final StudentRepository studentRepository;
     private final StudentCourseService studentCourseService;
-    private final StudentService studentService;
 
     // コンストラクタによる依存性注入
     public StudentDetailService(
             StudentRepository studentRepository,
-            StudentCourseService studentCourseService,
-            StudentService studentService // 新しい依存性を追加
+            StudentCourseService studentCourseService
     ) {
         this.studentRepository = studentRepository;
         this.studentCourseService = studentCourseService;
-        this.studentService = studentService; // インスタンスを初期化
     }
 
     /**
@@ -31,6 +29,7 @@ public class StudentDetailService {
      * 学生と紐付くコース情報を取得し、学生詳細情報 ({@link StudentDetail}) のリストを生成します。
      * 小規模プロジェクトを想定しており、メモリ不足エラーは考慮していませんが、
      * 学生数が増加した場合にはスケーラブルなデータ処理（例えばページング処理）への対応が必要です。
+     *
      * @return 全学生の詳細情報（学生情報および紐付くコース情報）のリスト
      */
     public List<StudentDetail> findAllStudentDetails() {
@@ -44,23 +43,8 @@ public class StudentDetailService {
     }
 
     /**
-     * 学生情報と紐づくコース情報を保存または更新するメソッド。
-     * 学生情報を保存した後、そのIDを基に関連するコース情報も一括で保存または更新する。
-     * @param studentDetail 学生情報とコース情報を含むオブジェクト
-     */
-    public void saveStudentAndCourses(StudentDetail studentDetail) {
-        // 学生情報は StudentService を利用して保存
-        Student savedStudent = studentService.saveStudent(studentDetail.getStudent());
-
-        // コース情報は StudentCourseService に委譲
-        List<StudentCourse> courses = studentDetail.getStudentCourses();
-        if (courses != null && !courses.isEmpty()) {
-            studentCourseService.saveCourses(courses, savedStudent.getId());
-        }
-    }
-
-    /**
      * 学生情報とコース情報を基に詳細情報を生成
+     *
      * @param student 学生オブジェクト
      * @param courses 更新済みコース情報リスト
      * @return 学生詳細情報
