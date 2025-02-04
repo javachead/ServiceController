@@ -23,7 +23,6 @@ public class StudentService {
     /**
      * 学生情報をIDで取得するメソッド。
      */
-    @Transactional(readOnly = true)
     public Student getStudentById(Long id) {
         return studentRepository.findById(id)
                 .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID = " + id));
@@ -31,8 +30,8 @@ public class StudentService {
 
     /**
      * 学生情報を更新するメソッド（デフォルトのトランザクション）。
+     * コントローラー側の呼び出し側で @Transactionalは実装済み。
      */
-    @Transactional
     public void updateStudent(Student updatedStudent) {
         // 学生情報を取得し、存在しない場合の例外
         Student existingStudent = studentRepository.findById(updatedStudent.getId())
@@ -56,10 +55,10 @@ public class StudentService {
     }
 
     /**
-     * 新しい学生情報を保存します。
+     * 新しい学生情報を登録します。
+     * コントローラー側の呼び出し側で @Transactionalは実装済みです。
      */
-    @Transactional
-    public Student saveStudent(Student newStudent) {
+    public Student save(Student newStudent) {
         if (newStudent.getId() != null) {
             throw new IllegalArgumentException("新規登録にはIDを指定しないでください: ID = " + newStudent.getId());
         }

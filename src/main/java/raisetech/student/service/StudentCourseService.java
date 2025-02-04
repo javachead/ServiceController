@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional // このクラスのすべてのメソッドにトランザクションを適用
 @Slf4j
 public class StudentCourseService {
 
@@ -31,6 +30,7 @@ public class StudentCourseService {
     /**
      * 新規登録・既存更新のコース処理
      * このメソッドはリストで渡されたコースの中で、新しいものを登録し、既存のものを更新します。
+     * コントローラー側の呼び出し側で @Transactionalは実装済み。
      *
      * @param targetCourses   新規または更新対象のコースリスト
      * @param existingCourses 既存コースのリスト
@@ -61,7 +61,8 @@ public class StudentCourseService {
      * @param newCourses      保存または更新されるコースのリスト
      * @param existingCourses 既存コースのリスト
      */
-    private void removeUnusedCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses) {
+    @Transactional
+    public void removeUnusedCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses) {
         // 新しいコースのIDをセットとして保持
         Set<Long> newCourseIds = newCourses.stream()
                 .map(StudentCourse::getId)
@@ -83,11 +84,12 @@ public class StudentCourseService {
      * - 新規コースは登録し、既存のコースは更新。
      * - 渡されたリストに存在しないコースは削除される。
      * - 入力リストが学生IDと整合性がとれている必要あり。
+     * 　コントローラー側の呼び出し側で @Transactionalは実装済みです。
      *
      * @param courses   保存または更新するコースリスト
      * @param studentId 学生ID
      */
-    public void saveCourses(List<StudentCourse> courses, Long studentId) {
+    public void saveCourse(List<StudentCourse> courses, Long studentId) {
         log.info("学生ID {} に紐づくコース情報を保存または更新します。件数: {}", studentId, courses.size());
 
         // 学生に関連する既存のコース情報を取得

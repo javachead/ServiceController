@@ -71,51 +71,42 @@ public class StudentController {
     }
 
     /**
-     * 新しい学生を登録するエンドポイント。
+     * 新しい学生情報を登録し、関連するコース情報も保存します。
+     * <p>
+     * このメソッドはトランザクション管理下で動作し、以下の操作を実行します：
+     * 1. `Student`オブジェクトをデータベースに保存します。
+     * 2. 学生に紐づく`StudentCourse`リストをデータベースに保存します。
+     * 3. 正常に保存できた場合は201 Createdのレスポンスを返します。
+     * 保存中にエラーが発生した場合は、500 Internal Server Errorのレスポンスを返します。
      *
-     * @param student 登録する学生情報
-     * @return 登録成功時にHTTPステータス201 (Created) と登録された学生情報を返す
+     * @param student 新しい学生情報を含むリクエストボディ（JSON形式）。
+     *                このオブジェクトは{@code @Valid}でバリデーションされます。
+     * @return 保存に成功した場合、作成された学生情報を含むレスポンス（201 Created）。
+     * 失敗した場合、エラーメッセージを含むレスポンス（500 Internal Server Error）。
      */
 
     @Transactional
     @PostMapping
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
         try {
-            // 学生情報を保存
-            studentService.saveStudent(student);
+            // 1. 学生情報を保存
+            Student save = studentService.save(student);
 
-            // 学生IDに基づきコース情報を取得
-            List<StudentCourse> saveCourses = studentCourseService.findByStudentId(student.getId());
+            // 2. 学生に紐づくコース情報を保存
+            List<StudentCourse> saveCourse = student.getStudentCourses(); // コース情報を取得
+            if (saveCourse != null && !saveCourse.isEmpty()) {
+                Long studentId = student.getId(); // StudentオブジェクトからIDを取得
+                saveCourse.forEach(course -> course.setStudentId(studentId)); // 各コースにstudentIdを設定
+                studentCourseService.saveCourse(saveCourse, studentId); // studentIdを渡す
+            }
 
-            // 登録成功レスポンスを返却
+            // 3. 登録成功レスポンスを返却
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new StudentAddResponse("新しい学生が登録されました", student));
+                    .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", save));
         } catch (Exception e) {
             // サーバーエラー時のハンドリング
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentAddResponse("エラー: 学生の登録に失敗しました", student));
-        }
-    }
-
-    /**
-     * 特定の学生に関連するコースを新規登録するエンドポイント。
-     * 学生が途中で新たなコースに参加したり、既存のコースを変更するケースが頻繁に発生する場合に使用
-     *
-     * @param studentId  対象の学生ID
-     * @param saveCourse 登録するコースのリスト
-     * @return 登録成功時にHTTPステータス201 (Created) とメッセージを返す
-     */
-    @Transactional
-    @PostMapping("/{studentId}/courses")
-    public ResponseEntity<StudentAddResponse> createStudentCourse(
-            @PathVariable Long studentId,
-            @RequestBody @Valid List<StudentCourse> saveCourse) {
-        try {
-            studentCourseService.saveCourses(saveCourse, studentId);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new StudentAddResponse("新しいコースが登録されました", null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    .body(new StudentAddResponse("エラー: 学生および関連コースの登録に失敗しました", student));
         }
     }
 
@@ -127,7 +118,6 @@ public class StudentController {
      * @throws StudentNotFoundException 学生IDが存在しない場合にスローされる
      * @throws RuntimeException         その他のサーバーエラー発生時にスローされる
      */
-    @Transactional(readOnly = true)
     @GetMapping("/{id}")
     public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
         try {
@@ -162,7 +152,7 @@ public class StudentController {
 
             // コース情報更新処理
             List<StudentCourse> updatedCourse = studentDetail.getStudentCourses();
-            studentCourseService.saveCourses(updatedCourse, id);
+            studentCourseService.saveCourse(updatedCourse, id);
 
             // 正常レスポンスを返却
             return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent.getId()));
@@ -179,8 +169,8 @@ public class StudentController {
      * 全学生情報を取得するエンドポイント。
      *
      * @return 学生のリストを含むレスポンス
+     * @throws Exception サーバー内でエラーが発生した場合
      */
-    @Transactional(readOnly = true)
     @GetMapping
     public ResponseEntity<StudentsResponse> getAllStudents() {
         try {
@@ -206,7 +196,6 @@ public class StudentController {
      * @return 削除成功時にメッセージを返す
      * @throws StudentNotFoundException 学生IDが存在しない場合
      */
-    @Transactional
     @DeleteMapping("/{id}")
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
         try {
