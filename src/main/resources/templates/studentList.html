@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>受講生一覧</title>
 </head>
 <body>
 <h1>受講生一覧</h1>
-<table border="1">
+<table>
     <thead>
     <tr>
         <th>ID</th>
@@ -52,7 +52,7 @@
         <td>
             <!--/*@thymesVar id="isDeleted" type=""*/-->
             <label>
-                <input type="checkbox" th:checked="${studentDetail.student.isDeleted}"/>
+                <input th:checked="${studentDetail.student.isDeleted}" type="checkbox"/>
             </label>
         </td>
     </tr>

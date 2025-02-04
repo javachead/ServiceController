@@ -1,16 +1,17 @@
 package raisetech.student.data;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
+
 import java.util.List;
 
 @Getter
@@ -19,11 +20,6 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 
-/**
- * 学生情報を管理するクラス（DTO）。
- * 学生のプロパティを保持するデータコンテナであり、
- * 別途バリデーションや操作ロジックはサービス層で実装されることを前提としています。
- */
 public class Student {
 
     @Min(value = 1, message = "IDは1以上である必要があります")
@@ -62,7 +58,3 @@ public class Student {
     // 学生が受講しているコースのリストを保持
     private List<StudentCourse> studentCourses;
 }
-
-
-
-

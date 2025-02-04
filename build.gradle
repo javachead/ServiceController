@@ -1,73 +1,73 @@
 plugins {
-	// 必要なGradleプラグインを適用
-	// Javaプロジェクト用
-	id 'java'
-	// WARファイルパッケージング用
-	id 'war'
-	// Spring Boot用
-	id 'org.springframework.boot' version '3.2.0'
-	// Spring依存管理プラグイン
-	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	// アプリケーションプロジェクト用
-	id 'application'
+    // 必要なGradleプラグインを適用
+    // Javaプロジェクト用
+    id 'java'
+    // WARファイルパッケージング用
+    id 'war'
+    // Spring Boot用
+    id 'org.springframework.boot' version '3.2.0'
+    // Spring依存管理プラグイン
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    // アプリケーションプロジェクト用
+    id 'application'
 }
 
 group = 'raisetech.student.management' // プロジェクトのグループ名
 version = '1.0.0' // バージョン番号
 
 java {
-	// Javaのツールチェーンを構成（JDK 21を指定）
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定
-	}
+    // Javaのツールチェーンを構成（JDK 21を指定）
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定
+    }
 }
 
 configurations {
-	// `compileOnly`の依存関係にアノテーションプロセッサを含む設定
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    // `compileOnly`の依存関係にアノテーションプロセッサを含む設定
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 application {
-	// アプリケーションのエントリーポイント（メインクラス）を指定
-	mainClass = 'raisetech.student.management.StudentManagementApplication'
+    // アプリケーションのエントリーポイント（メインクラス）を指定
+    mainClass = 'raisetech.student.management.StudentManagementApplication'
 }
 
 repositories {
-	// 依存関係を取得するためのリポジトリを設定
-	mavenCentral() // Maven Centralリポジトリを使用
+    // 依存関係を取得するためのリポジトリを設定
+    mavenCentral() // Maven Centralリポジトリを使用
 }
 
 dependencies {
-	// Spring Boot関連依存関係
-	implementation 'org.springframework.boot:spring-boot-starter-web' // Spring MVC（Webアプリケーション用）
-	implementation 'org.springframework.boot:spring-boot-starter' // 基本的なSpring Bootの依存関係
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleafテンプレートエンジン用
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // Tomcatサーバー（実行時依存）
-	implementation 'org.springframework.boot:spring-boot-starter-validation' // 入力検証用
-	implementation 'org.springframework.boot:spring-boot-starter-tomcat' //組み込みTomcatを利用するための依存関係
+    // Spring Boot関連依存関係
+    implementation 'org.springframework.boot:spring-boot-starter-web' // Spring MVC（Webアプリケーション用）
+    implementation 'org.springframework.boot:spring-boot-starter' // 基本的なSpring Bootの依存関係
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Thymeleafテンプレートエンジン用
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // Tomcatサーバー（実行時依存）
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // 入力検証用
+    implementation 'org.springframework.boot:spring-boot-starter-tomcat' //組み込みTomcatを利用するための依存関係
 
-	// データベース関連依存関係
-	runtimeOnly 'mysql:mysql-connector-java:8.0.33' // MySQL用JDBCドライバ
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3' // MyBatis用Starter
+    // データベース関連依存関係
+    runtimeOnly 'mysql:mysql-connector-java:8.0.33' // MySQL用JDBCドライバ
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3' // MyBatis用Starter
 
-	// その他のユーティリティライブラリ
-	implementation 'org.apache.commons:commons-lang3:3.14.0' // Apacheの汎用ユーティリティライブラリ（文字列処理など）
-	implementation 'org.codehaus.groovy:groovy-all:3.0.7' // Groovy言語用ライブラリ
-	annotationProcessor 'org.projectlombok:lombok' // Lombokアノテーションの処理用
+    // その他のユーティリティライブラリ
+    implementation 'org.apache.commons:commons-lang3:3.14.0' // Apacheの汎用ユーティリティライブラリ（文字列処理など）
+    implementation 'org.codehaus.groovy:groovy-all:3.0.7' // Groovy言語用ライブラリ
+    annotationProcessor 'org.projectlombok:lombok' // Lombokアノテーションの処理用
 
-	// テスト用ライブラリ
-	testImplementation 'org.springframework.boot:spring-boot-starter-test' // Spring Bootのテスト依存関係
-	runtimeOnly 'com.h2database:h2' // 組み込みテスト用データベース
-	implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0' // JPAとしての永続化管理API
+    // テスト用ライブラリ
+    testImplementation 'org.springframework.boot:spring-boot-starter-test' // Spring Bootのテスト依存関係
+    runtimeOnly 'com.h2database:h2' // 組み込みテスト用データベース
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0' // JPAとしての永続化管理API
 }
 
 tasks.withType(JavaCompile).configureEach {
-	// JDK 21をJavaコンパイルタスクで使用
-	javaCompiler = javaToolchains.compilerFor {
-		languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定（JDK 21）
-	}
-	// JVMオプションを追加
-	options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true' // JVMに自己アタッチを許可する設定
+    // JDK 21をJavaコンパイルタスクで使用
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion.set(JavaLanguageVersion.of(21)) // 必要なJavaバージョンを設定（JDK 21）
+    }
+    // JVMオプションを追加
+    options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true' // JVMに自己アタッチを許可する設定
 }

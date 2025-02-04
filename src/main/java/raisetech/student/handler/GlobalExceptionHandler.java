@@ -28,6 +28,7 @@ public class GlobalExceptionHandler {
 
     /**
      * 入力値バリデーションエラー（MethodArgumentNotValidException）のハンドリング。
+     *
      * @param ex MethodArgumentNotValidException インスタンス
      * @return 400 BAD_REQUEST とフィールドごとのエラーメッセージ
      */
@@ -58,6 +59,7 @@ public class GlobalExceptionHandler {
     /**
      * ConstraintViolationExceptionのハンドリング。
      * （例えば、@Minや@Maxアノテーション違反時）
+     *
      * @param ex ConstraintViolationException インスタンス
      * @return 400 BAD_REQUEST とエラーレスポンス
      */
@@ -74,7 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * JSONパースエラー（InvalidFormatException）のハンドリング。
+     * JSONパースエラー（InvalidFormatException）のハンドリング.
      */
     @ExceptionHandler(InvalidFormatException.class)
     public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException ex) {
@@ -145,6 +147,7 @@ public class GlobalExceptionHandler {
 
     /**
      * 学生が見つからない場合（StudentNotFoundException）のハンドリング。
+     *
      * @param ex StudentNotFoundException
      * @return HTTP 404 NOT_FOUND とエラーレスポンス
      */
@@ -163,6 +166,7 @@ public class GlobalExceptionHandler {
 
     /**
      * その他の予期しない例外のハンドリング。
+     *
      * @param ex Exception インスタンス
      * @return 500 INTERNAL_SERVER_ERROR とエラーレスポンス
      */

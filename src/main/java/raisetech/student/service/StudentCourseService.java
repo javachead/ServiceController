@@ -1,15 +1,15 @@
 package raisetech.student.service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional // このクラスのすべてのメソッドにトランザクションを適用
@@ -31,10 +31,11 @@ public class StudentCourseService {
     /**
      * 新規登録・既存更新のコース処理
      * このメソッドはリストで渡されたコースの中で、新しいものを登録し、既存のものを更新します。
-     * @param targetCourses 新規または更新対象のコースリスト
+     *
+     * @param targetCourses   新規または更新対象のコースリスト
      * @param existingCourses 既存コースのリスト
-     * @param studentId 学生ID (新規登録の際に使用)
-     * @param courseUpdater 新規・更新処理を行うための関数型インターフェース
+     * @param studentId       学生ID (新規登録の際に使用)
+     * @param courseUpdater   新規・更新処理を行うための関数型インターフェース
      */
     private void handleCourses(List<StudentCourse> targetCourses, List<StudentCourse> existingCourses,
                                Long studentId, CourseUpdater<StudentCourse> courseUpdater) {
@@ -56,7 +57,8 @@ public class StudentCourseService {
      * 渡された情報から削除対象の既存コースを判定し、該当するものを削除します。
      * 注意: この処理を行うことで、渡されたリストにないすべてのコースが削除されるため、
      * 入力データの正当性を事前に保証する必要があります。
-     * @param newCourses 保存または更新されるコースのリスト
+     *
+     * @param newCourses      保存または更新されるコースのリスト
      * @param existingCourses 既存コースのリスト
      */
     private void removeUnusedCourses(List<StudentCourse> newCourses, List<StudentCourse> existingCourses) {
@@ -81,7 +83,8 @@ public class StudentCourseService {
      * - 新規コースは登録し、既存のコースは更新。
      * - 渡されたリストに存在しないコースは削除される。
      * - 入力リストが学生IDと整合性がとれている必要あり。
-     * @param courses 保存または更新するコースリスト
+     *
+     * @param courses   保存または更新するコースリスト
      * @param studentId 学生ID
      */
     public void saveCourses(List<StudentCourse> courses, Long studentId) {

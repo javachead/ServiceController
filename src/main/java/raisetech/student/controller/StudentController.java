@@ -76,6 +76,7 @@ public class StudentController {
      * @param student 登録する学生情報
      * @return 登録成功時にHTTPステータス201 (Created) と登録された学生情報を返す
      */
+
     @Transactional
     @PostMapping
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
@@ -178,7 +179,6 @@ public class StudentController {
      * 全学生情報を取得するエンドポイント。
      *
      * @return 学生のリストを含むレスポンス
-     * @throws Exception サーバー内でエラーが発生した場合
      */
     @Transactional(readOnly = true)
     @GetMapping

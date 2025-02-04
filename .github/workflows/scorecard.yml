@@ -27,19 +27,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload results to code scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/code-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
-
-# 設定ファイルをステージング
-# git add .github/workflows/scorecard.yml
-
-# 設定ファイルの追加理由をコミット
-# git commit -m "Add Scorecards workflow"
-
-# リポジトリにプッシュ
-# git push origin mainIDEの設定で保存時に空行が含まれるように設定
-
-# コメントアウトされた環境変数例
-# env:
-# GITHUB_TOKEN: ${{ secrets.PAT }}

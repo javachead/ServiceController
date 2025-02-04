@@ -5,13 +5,14 @@
 
     <!-- 共通: 学生テーブルのカラムリスト -->
     <sql id="StudentColumns">
-        id, name, kana_name AS kanaName, nickname, email, area, age, sex, remark, is_deleted AS deleted
+        id
+        , name, kana_name AS kanaName, nickname, email, area, age, sex, remark, is_deleted AS deleted
     </sql>
 
     <!-- 学生IDを指定して学生情報を取得 -->
     <select id="findById" parameterType="java.lang.Long" resultType="raisetech.student.data.Student">
         SELECT
-        <include refid="StudentColumns" />
+        <include refid="StudentColumns"/>
         FROM
         student
         WHERE
@@ -22,15 +23,15 @@
     <update id="updateStudentById" parameterType="raisetech.student.data.Student">
         UPDATE student
         <set>
-            <if test="name != null"> name = #{name}, </if>
-            <if test="kanaName != null"> kana_name = #{kanaName}, </if>
-            <if test="nickname != null"> nickname = #{nickname}, </if>
-            <if test="email != null"> email = #{email}, </if>
-            <if test="area != null"> area = #{area}, </if>
-            <if test="age != null"> age = #{age}, </if>
-            <if test="sex != null"> sex = #{sex}, </if>
-            <if test="remark != null"> remark = #{remark}, </if>
-            <if test="deleted != null"> is_deleted = #{deleted} </if>
+            <if test="name != null">name = #{name},</if>
+            <if test="kanaName != null">kana_name = #{kanaName},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="area != null">area = #{area},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="sex != null">sex = #{sex},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="deleted != null">is_deleted = #{deleted}</if>
         </set>
         WHERE id = #{id};
     </update>
@@ -38,7 +39,7 @@
     <!-- 全ての学生情報（削除フラグを考慮して）を取得 -->
     <select id="findAllStudents" resultType="raisetech.student.data.Student">
         SELECT
-        <include refid="StudentColumns" />
+        <include refid="StudentColumns"/>
         FROM
         student
         WHERE
@@ -88,7 +89,9 @@
 
     <!-- 学生情報を論理削除 -->
     <update id="deleteById" parameterType="java.lang.Long">
-        UPDATE student SET is_deleted = true WHERE id = #{id};
+        UPDATE student
+        SET is_deleted = true
+        WHERE id = #{id};
     </update>
 
 </mapper>

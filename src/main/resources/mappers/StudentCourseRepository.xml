@@ -28,15 +28,16 @@
     <!-- 特定のコースを更新 -->
     <update id="updateCourse">
         UPDATE student_courses
-        SET course_name = #{courseName},
+        SET course_name     = #{courseName},
             course_start_at = #{courseStartAt},
-            course_end_at = #{courseEndAt}
+            course_end_at   = #{courseEndAt}
         WHERE id = #{id}
     </update>
 
     <!-- 特定のコースを削除 -->
     <delete id="deleteCourse">
-        DELETE FROM student_courses
+        DELETE
+        FROM student_courses
         WHERE id = #{id}
     </delete>
 

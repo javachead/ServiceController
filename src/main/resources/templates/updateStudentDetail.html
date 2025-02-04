@@ -1,95 +1,95 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>学生情報変更</title>
+    <meta charset="UTF-8">
+    <title>学生情報変更</title>
 </head>
 <body>
 <h1>学生情報変更</h1>
 
 <!-- 学生情報変更用フォーム -->
-<form th:action="@{/updateStudent}" th:object="${student}" method="post">
-  <!-- 学生ID (エンティティ識別子) を送信データに含めるための隠しフィールド -->
-  <!-- このフィールドはSpringのバインディングに対応 -->
-  <input type="hidden" th:field="*{id}" />
+<form method="post" th:action="@{/updateStudent}" th:object="${student}">
+    <!-- 学生ID (エンティティ識別子) を送信データに含めるための隠しフィールド -->
+    <!-- このフィールドはSpringのバインディングに対応 -->
+    <input th:field="*{id}" type="hidden"/>
 
-  <div>
-    <label for="name">名前:</label>
-    <!-- "名前" フィールド: 必須入力 (required) のバリデーションをクライアントサイドで指定 -->
-    <input type="text" id="name" th:field="*{name}" required/>
-  </div>
+    <div>
+        <label for="name">名前:</label>
+        <!-- "名前" フィールド: 必須入力 (required) のバリデーションをクライアントサイドで指定 -->
+        <input id="name" required th:field="*{name}" type="text"/>
+    </div>
 
-  <div>
-    <label for="kanaName">ふりがな:</label>
-    <!-- "ふりがな" フィールド: 必須入力 -->
-    <input type="text" id="kanaName" th:field="*{kanaName}" required/>
-  </div>
+    <div>
+        <label for="kanaName">ふりがな:</label>
+        <!-- "ふりがな" フィールド: 必須入力 -->
+        <input id="kanaName" required th:field="*{kanaName}" type="text"/>
+    </div>
 
-  <div>
-    <label for="nickname">ニックネーム:</label>
-    <!-- "ニックネーム" フィールド: 必須ではない (オプショナルなフィールド) -->
-    <input type="text" id="nickname" th:field="*{nickname}"/>
-  </div>
+    <div>
+        <label for="nickname">ニックネーム:</label>
+        <!-- "ニックネーム" フィールド: 必須ではない (オプショナルなフィールド) -->
+        <input id="nickname" th:field="*{nickname}" type="text"/>
+    </div>
 
-  <div>
-    <label for="email">メールアドレス:</label>
-    <!-- "メールアドレス" フィールド: HTML5 のバリデーションで形式を強制 -->
-    <input type="email" id="email" th:field="*{email}" required/>
-  </div>
+    <div>
+        <label for="email">メールアドレス:</label>
+        <!-- "メールアドレス" フィールド: HTML5 のバリデーションで形式を強制 -->
+        <input id="email" required th:field="*{email}" type="email"/>
+    </div>
 
-  <div>
-    <label for="area">都道府県:</label>
-    <!-- "都道府県" フィールド: 値が空の場合は選択されていないと見なす -->
-    <select id="area" th:field="*{area}">
-      <option value="">-- 選択 --</option>
-      <!-- オプションリストは固定された日本の都道府県 -->
-    </select>
-  </div>
+    <div>
+        <label for="area">都道府県:</label>
+        <!-- "都道府県" フィールド: 値が空の場合は選択されていないと見なす -->
+        <select id="area" th:field="*{area}">
+            <option value="">-- 選択 --</option>
+            <!-- オプションリストは固定された日本の都道府県 -->
+        </select>
+    </div>
 
-  <div>
-    <label for="age">年齢:</label>
-    <!-- "年齢" のフィールド: 数値であり、正の値 (最小値は1) のみ許容 -->
-    <input type="number" id="age" th:field="*{age}" min="1" required/>
-  </div>
+    <div>
+        <label for="age">年齢:</label>
+        <!-- "年齢" のフィールド: 数値であり、正の値 (最小値は1) のみ許容 -->
+        <input id="age" min="1" required th:field="*{age}" type="number"/>
+    </div>
 
-  <div>
-    <label for="sex">性別:</label>
-    <!-- "性別" フィールド: 特定の選択肢 (男性/女性/その他) のみ使用可能 -->
-    <select id="sex" th:field="*{sex}" required>
-      <option value="男性">男性</option>
-      <option value="女性">女性</option>
-      <option value="その他">その他</option>
-    </select>
-  </div>
+    <div>
+        <label for="sex">性別:</label>
+        <!-- "性別" フィールド: 特定の選択肢 (男性/女性/その他) のみ使用可能 -->
+        <select id="sex" required th:field="*{sex}">
+            <option value="男性">男性</option>
+            <option value="女性">女性</option>
+            <option value="その他">その他</option>
+        </select>
+    </div>
 
-  <div>
-    <label for="remark">備考:</label>
-    <!-- "備考" フィールド: テキスト入力、表示は任意 -->
-    <textarea id="remark" th:field="*{remark}"></textarea>
-  </div>
+    <div>
+        <label for="remark">備考:</label>
+        <!-- "備考" フィールド: テキスト入力、表示は任意 -->
+        <textarea id="remark" th:field="*{remark}"></textarea>
+    </div>
 
-  <div>
-    <label for="isDeleted">キャンセル:</label>
-    <!-- "キャンセル" フラグ: チェックボックス入力 -->
-    <!-- (false) を明示するため、hidden input を追加 -->
-    <input type="hidden" name="student.isDeleted" value="false"/>
-    <input type="checkbox" id="isDeleted" th:field="*{isDeleted}" />
-  </div>
+    <div>
+        <label for="isDeleted">キャンセル:</label>
+        <!-- "キャンセル" フラグ: チェックボックス入力 -->
+        <!-- (false) を明示するため、hidden input を追加 -->
+        <input name="student.isDeleted" type="hidden" value="false"/>
+        <input id="isDeleted" th:field="*{isDeleted}" type="checkbox"/>
+    </div>
 
-  <div>
-    <!-- フォーム送信ボタン -->
-    <button type="submit">登録内容を変更する</button>
-  </div>
+    <div>
+        <!-- フォーム送信ボタン -->
+        <button type="submit">登録内容を変更する</button>
+    </div>
 </form>
 
 <!-- 学生情報削除用フォーム -->
-<form th:action="@{/deleteStudent}" method="post">
-  <!-- 隠しフィールドを通じて学生IDを送信 -->
-  <input type="hidden" name="id" th:value="${student.id}" />
-  <!-- CSRF対策用トークンを送信 -->
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-  <!-- 削除ボタンに確認ダイアログを付与 -->
-  <button type="submit" onclick="return confirm('この受講生情報を削除しますか？');">この受講生情報を削除する</button>
+<form method="post" th:action="@{/deleteStudent}">
+    <!-- 隠しフィールドを通じて学生IDを送信 -->
+    <input name="id" th:value="${student.id}" type="hidden"/>
+    <!-- CSRF対策用トークンを送信 -->
+    <input name="${_csrf.parameterName}" type="hidden" value="${_csrf.token}"/>
+    <!-- 削除ボタンに確認ダイアログを付与 -->
+    <button onclick="return confirm('この受講生情報を削除しますか？');" type="submit">この受講生情報を削除する</button>
 </form>
 </body>
 </html>
