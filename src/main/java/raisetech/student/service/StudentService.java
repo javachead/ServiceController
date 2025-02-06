@@ -30,7 +30,6 @@ public class StudentService {
 
     /**
      * 学生情報を更新するメソッド（デフォルトのトランザクション）。
-     * コントローラー側の呼び出し側で @Transactionalは実装済み。
      */
     public void updateStudent(Student updatedStudent) {
         // 学生情報を取得し、存在しない場合の例外
@@ -56,7 +55,6 @@ public class StudentService {
 
     /**
      * 新しい学生情報を登録します。
-     * コントローラー側の呼び出し側で @Transactionalは実装済みです。
      */
     public Student save(Student newStudent) {
         if (newStudent.getId() != null) {

@@ -30,7 +30,6 @@ public class StudentCourseService {
     /**
      * 新規登録・既存更新のコース処理
      * このメソッドはリストで渡されたコースの中で、新しいものを登録し、既存のものを更新します。
-     * コントローラー側の呼び出し側で @Transactionalは実装済み。
      *
      * @param targetCourses   新規または更新対象のコースリスト
      * @param existingCourses 既存コースのリスト
@@ -84,7 +83,6 @@ public class StudentCourseService {
      * - 新規コースは登録し、既存のコースは更新。
      * - 渡されたリストに存在しないコースは削除される。
      * - 入力リストが学生IDと整合性がとれている必要あり。
-     * 　コントローラー側の呼び出し側で @Transactionalは実装済みです。
      *
      * @param courses   保存または更新するコースリスト
      * @param studentId 学生ID
