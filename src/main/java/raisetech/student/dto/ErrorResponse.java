@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus;
 // Lombokを利用したコンストラクタ生成
 @Getter
 public class ErrorResponse {
-    private String message;
-    private HttpStatus httpStatus;
+    private final String message;
+    private final HttpStatus httpStatus;
 
     // 引数3つのカスタムコンストラクタ
     public ErrorResponse(String message, String details, int statusCode) {
