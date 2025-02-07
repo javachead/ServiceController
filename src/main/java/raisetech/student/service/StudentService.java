@@ -29,21 +29,6 @@ public class StudentService {
     }
 
     /**
-     * 学生情報を更新するメソッド（デフォルトのトランザクション）。
-     */
-    public void updateStudent(Student updatedStudent) {
-        // 学生情報を取得し、存在しない場合の例外
-        Student existingStudent = studentRepository.findById(updatedStudent.getId())
-                .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID=" + updatedStudent.getId()));
-
-        // IDのみコピー対象から除外してプロパティを一括コピー
-        BeanUtils.copyProperties(updatedStudent, existingStudent, "id");
-
-        // エンティティを保存
-        studentRepository.save(existingStudent);
-    }
-
-    /**
      * 指定されたIDで学生情報を削除する。
      */
     @Transactional
@@ -54,14 +39,21 @@ public class StudentService {
     }
 
     /**
-     * 新しい学生情報を登録します。
+     * 新しい学生情報を登録＆既存学生の情報を更新します。
      */
-    public Student save(Student newStudent) {
-        if (newStudent.getId() != null) {
-            throw new IllegalArgumentException("新規登録にはIDを指定しないでください: ID = " + newStudent.getId());
+    public Student save(Student student) {
+        // IDがnullの場合は新規保存、そうでない場合は更新
+        if (student.getId() == null) {
+            return studentRepository.save(student);
+        } else {
+            // 更新の場合
+            Student existingStudent = studentRepository.findById(student.getId())
+                    .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID=" + student.getId()));
+
+            // 既存データにリクエストのデータを反映
+            BeanUtils.copyProperties(student, existingStudent, "id"); // ID以外をコピー
+            return studentRepository.save(existingStudent);
         }
-        log.info("新しい学生情報を登録します: {}", newStudent);
-        return studentRepository.save(newStudent);
     }
 
     /**

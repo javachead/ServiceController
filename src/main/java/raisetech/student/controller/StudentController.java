@@ -148,14 +148,18 @@ public class StudentController {
             // 学生データの更新処理
             Student updatedStudent = studentDetail.getStudent();
             updatedStudent.setId(id);
-            studentService.updateStudent(updatedStudent);
 
-            // コース情報更新処理
-            List<StudentCourse> updatedCourse = studentDetail.getStudentCourses();
-            studentCourseService.saveCourse(updatedCourse, id);
+            // 学生情報を保存または更新
+            studentService.save(updatedStudent);
 
-            // 正常レスポンスを返却
-            return ResponseEntity.ok(new StudentResponse("学生データが更新されました", updatedStudent.getId()));
+            // コース情報を一括保存・更新
+            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
+            if (updatedCourses != null && !updatedCourses.isEmpty()) {
+                studentCourseService.saveCourse(updatedCourses, id); // `saveCourse` を呼び出し
+            }
+
+            // 正常なレスポンスを返却
+            return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
         } catch (StudentNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new StudentResponse("指定された学生IDは存在しません", null));

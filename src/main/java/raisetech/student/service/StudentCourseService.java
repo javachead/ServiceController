@@ -28,30 +28,6 @@ public class StudentCourseService {
     }
 
     /**
-     * 新規登録・既存更新のコース処理
-     * このメソッドはリストで渡されたコースの中で、新しいものを登録し、既存のものを更新します。
-     *
-     * @param targetCourses   新規または更新対象のコースリスト
-     * @param existingCourses 既存コースのリスト
-     * @param studentId       学生ID (新規登録の際に使用)
-     * @param courseUpdater   新規・更新処理を行うための関数型インターフェース
-     */
-    private void handleCourses(List<StudentCourse> targetCourses, List<StudentCourse> existingCourses,
-                               Long studentId, CourseUpdater<StudentCourse> courseUpdater) {
-        targetCourses.forEach(course -> {
-            if (course.getId() == null) {
-                log.info("新規登録コース: {}", course);
-                course.setStudentId(studentId);
-                studentCourseRepository.insertCourse(course);
-            } else {
-                log.info("更新対象コース: {}", course);
-                // CourseUpdaterのmergeメソッドを使用
-                courseUpdater.merge(existingCourses, course);
-            }
-        });
-    }
-
-    /**
      * 存在しないコースの削除処理
      * 渡された情報から削除対象の既存コースを判定し、該当するものを削除します。
      * 注意: この処理を行うことで、渡されたリストにないすべてのコースが削除されるため、
@@ -94,28 +70,40 @@ public class StudentCourseService {
         List<StudentCourse> existingCourses = studentCourseRepository.findByStudentId(studentId);
 
         // 更新または新規登録
-        handleCourses(courses, existingCourses, studentId, (existingList, course) -> {
-            existingList.stream()
-                    .filter(existing -> existing.getId().equals(course.getId()))
-                    .findFirst()
-                    .ifPresentOrElse(existing -> {
-                        existing.setCourseName(course.getCourseName());
-                        existing.setCourseStartAt(course.getCourseStartAt());
-                        existing.setCourseEndAt(course.getCourseEndAt());
-                        studentCourseRepository.updateCourse(existing);
-                    }, () -> {
-                        throw new IllegalArgumentException("該当するコースIDが見つかりません: ID=" + course.getId());
-                    });
+        courses.forEach(course -> {
+            if (course.getId() == null) {
+                // 新規登録
+                log.info("新規登録コース: {}", course);
+                course.setStudentId(studentId);
+                studentCourseRepository.insertCourse(course);
+            } else {
+                // 更新処理
+                log.info("更新対象コース: {}", course);
+                existingCourses.stream()
+                        .filter(existing -> existing.getId().equals(course.getId()))
+                        .findFirst()
+                        .ifPresentOrElse(existing -> {
+                            // 更新フィールドのマージ
+                            existing.setCourseName(course.getCourseName());
+                            existing.setCourseStartAt(course.getCourseStartAt());
+                            existing.setCourseEndAt(course.getCourseEndAt());
+                            studentCourseRepository.updateCourse(existing);
+                        }, () -> {
+                            // 指定されたIDのコースが見つからなければエラー
+                            throw new IllegalArgumentException("該当するコースIDが見つかりません: ID=" + course.getId());
+                        });
+            }
         });
 
-        // 削除対象のコースを判定して削除
-        removeUnusedCourses(courses, existingCourses);
-        log.info("コース保存および削除処理完了。");
-    }
-
-    // 関数型インターフェース（汎用化）
-    @FunctionalInterface
-    interface CourseUpdater<T> {
-        void merge(List<T> existingList, T target);
+        // 入力リストに存在しない既存データを削除
+        List<Long> targetIds = courses.stream()
+                .map(StudentCourse::getId)
+                .toList(); // 入力リストのIDリスト
+        existingCourses.stream()
+                .filter(existing -> !targetIds.contains(existing.getId()))
+                .forEach(courseToDelete -> {
+                    log.info("削除対象コース: {}", courseToDelete);
+                    studentCourseRepository.deleteCourse(courseToDelete.getId());
+                });
     }
 }
