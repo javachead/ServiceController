@@ -33,8 +33,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
+      
+      # gradlewスクリプトの行末をUnixスタイルに変換
+      - name: Convert line endings
+        run: dos2unix ./gradlew
       
       # CodeQLの初期化
       - name: Initialize CodeQL
