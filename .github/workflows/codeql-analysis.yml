@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: "0 0 * * 1" # 毎週月曜日のUTC 00:00 (日本時間で朝9:00)
+    - cron: "0 0 * * 1" # Every Monday at 00:00 UTC
 
 jobs:
   analyze:
@@ -21,35 +21,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'java' ] # 他の言語を追加可能
+        language: [ 'java' ] # Add other languages as needed
     
     steps:
-      # リポジトリのチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
       
-      # Javaのセットアップ
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '17'
           cache: 'gradle'
       
-      # gradlewスクリプトの行末をUnixスタイルに変換
-      - name: Convert line endings
+      - name: Install dos2unix
+        run: sudo apt-get install dos2unix
+      
+      - name: Convert line endings of gradlew
         run: dos2unix ./gradlew
       
-      # CodeQLの初期化
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
       
-      # プロジェクトのビルド
       - name: Build the project
         run: ./gradlew build --no-daemon --info --stacktrace
       
-      # CodeQL解析の実行
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
