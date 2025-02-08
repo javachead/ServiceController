@@ -1,0 +1,32 @@
+name: Scorecards
+
+on:
+  schedule:
+    # 毎週月曜日に実行
+    - cron: "0 0 * * 1"
+  
+  workflow_dispatch: # 手動で実行可能にするトリガー
+  
+  push:
+    branches:
+      - main
+
+jobs:
+  scorecards:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Run Scorecards
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload results to code scanning
+        uses: github/code-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif

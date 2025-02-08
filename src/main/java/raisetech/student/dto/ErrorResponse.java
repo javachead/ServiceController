@@ -1,6 +1,17 @@
 package raisetech.student.dto;
 
-/**
- * エラーレスポンスを表すDTOクラス
- */
-public record ErrorResponse(String message, String details, int status) {}
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+// Lombokを利用したコンストラクタ生成
+@Getter
+public class ErrorResponse {
+    private final String message;
+    private final HttpStatus httpStatus;
+
+    // 引数3つのカスタムコンストラクタ
+    public ErrorResponse(String message, String details, int statusCode) {
+        this.message = message;
+        this.httpStatus = HttpStatus.valueOf(statusCode); // 数値コードを HttpStatus に変換
+    }
+}

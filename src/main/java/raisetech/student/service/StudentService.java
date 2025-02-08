@@ -1,13 +1,14 @@
 package raisetech.student.service;
 
-import jakarta.validation.Valid;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raisetech.student.data.Student;
 import raisetech.student.exception.StudentNotFoundException;
 import raisetech.student.repository.StudentRepository;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -15,93 +16,50 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
 
-    public StudentService(StudentRepository studentRepository, StudentCourseService studentCourseService) {
+    public StudentService(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;
     }
 
     /**
-     * 学生情報を更新するメソッド。
-     * 注意:
-     * - 更新時に、学生ID（`student.getId()`）が必須です。存在しない場合は例外がスローされます。
-     * - 名前とメールアドレスには検証ロジックが適用されます。
-     * @param id 学生ID
-     * @param student 学生の更新用データ
+     * 学生情報をIDで取得するメソッド。
      */
-    @Transactional
-    public void updateStudentDetails(Long id, @Valid Student student) {
-        Optional.ofNullable(student.getId())
-                .orElseThrow(() -> {
-                    log.error("学生情報の更新にはIDが必要です。");
-                    return new IllegalArgumentException("学生情報を更新するためにはIDが必要です。");
-                });
-
-        log.info("updateStudentDetailsを実行します。ID={}, データ={}", student.getId(), student);
-
-        Optional.ofNullable(student.getName())
-                .filter(name -> !name.trim().isEmpty())
-                .orElseThrow(() -> {
-                    log.error("学生名が無効です: {}", student.getName());
-                    return new IllegalArgumentException("学生名は必須です");
-                });
-
-        Optional.ofNullable(student.getEmail())
-                .filter(email -> !email.trim().isEmpty())
-                .orElseThrow(() -> {
-                    log.error("メールアドレスが無効です: {}", student.getEmail());
-                    return new IllegalArgumentException("メールアドレスは必須です");
-                });
-
-        studentRepository.updateStudentDetails(student);
-
-        log.info("学生ID={} の情報を更新しました。更新内容: {}", student.getId(), student);
+    public Student getStudentById(Long id) {
+        return studentRepository.findById(id)
+                .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID = " + id));
     }
 
     /**
      * 指定されたIDで学生情報を削除する。
-     * - `deleteById` メソッドの動作は物理削除である点に注意。
-     * - 削除対象の学生に紐づくコース情報が自動的に削除されるかどうかはリポジトリ側の実装に依存します。
-     * @param id 削除対象の学生ID
      */
     @Transactional
     public void deleteStudentById(Long studentId) {
-        // 学生が存在しない場合は例外をスロー
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("指定された学生が見つかりません: ID=" + studentId));
-
-        // 対象学生を削除
-        studentRepository.deleteById(student.getId());
+        studentRepository.deleteById(studentId);
     }
 
     /**
-     * IDが空の場合は新規作成、存在する場合は更新処理を行う。
-     * - 新規作成時は挙動がシンプルで変更点なし。
-     * - 更新時には `updateStudentDetails` を介するため、検証ロジックやロギングが一貫する。
-     * @param student 保存対象の学生情報
+     * 新しい学生情報を登録＆既存学生の情報を更新します。
      */
-    public void saveStudent(Student student) {
-        Optional.ofNullable(student.getId())
-                .ifPresentOrElse(
-                        id -> updateStudentDetails(id, student), // IDがある場合は更新
-                        () -> studentRepository.insertStudent(student) // IDが空の場合は新規作成
-                );
+    public Student save(Student student) {
+        // IDがnullの場合は新規保存、そうでない場合は更新
+        if (student.getId() == null) {
+            return studentRepository.save(student);
+        } else {
+            // 更新の場合
+            Student existingStudent = studentRepository.findById(student.getId())
+                    .orElseThrow(() -> new StudentNotFoundException("学生が見つかりません: ID=" + student.getId()));
+
+            // 既存データにリクエストのデータを反映
+            BeanUtils.copyProperties(student, existingStudent, "id"); // ID以外をコピー
+            return studentRepository.save(existingStudent);
+        }
     }
 
     /**
-     * 指定されたIDに対応する学生情報を取得する。
-     * 注意:
-     * - 学生情報が見つからない場合、または削除フラグが立っている場合は例外がスローされます。
-     * @param id 学生ID
-     * @return 学生情報
+     * 任意フィールドの更新処理をサポート
      */
-    public Student getStudentById(Long id) {
-        log.info("学生ID={} の情報を取得します", id);
-
-        return studentRepository.findById(id)
-                .filter(student -> !student.isDeleted()) // 削除フラグが立っていないか確認
-                .orElseThrow(() -> {
-                    log.warn("指定されたIDの学生が見つかりません。または削除されています。ID: {}", id);
-                    // カスタム例外をスローするように変更
-                    return new StudentNotFoundException("指定されたIDの学生が見つかりません: ID=" + id);
-                });
+    private <T> void applyIfPresent(T source, java.util.function.Consumer<T> consumer) {
+        Optional.ofNullable(source).ifPresent(consumer);
     }
 }

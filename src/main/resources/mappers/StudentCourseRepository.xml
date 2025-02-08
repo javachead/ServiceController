@@ -1,23 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="raisetech.student.mapper.StudentCourseMapper">
+<mapper namespace="raisetech.student.repository.StudentCourseRepository">
 
-    <!-- マップの定義 -->
+    <!-- 結果マッピング -->
     <resultMap id="StudentCourseResultMap" type="raisetech.student.data.StudentCourse">
-        <id column="id" property="id" />
-        <result column="student_id" property="studentId" />
-        <result column="course_name" property="courseName" />
-        <result column="course_start_at" property="courseStartAt" />
-        <result column="course_end_at" property="courseEndAt" />
+        <id column="id" property="id"/>
+        <result column="course_name" property="courseName"/>
+        <result column="student_id" property="studentId"/>
+        <result column="course_start_at" property="courseStartAt"/>
+        <result column="course_end_at" property="courseEndAt"/>
     </resultMap>
 
-    <!-- SQL の定義例 -->
-    <select id="findAll" resultMap="StudentCourseResultMap">
-        SELECT id, student_id, course_name, course_start_at, course_end_at
-        FROM student_course
+    <!-- 学生IDで関連コースを検索 -->
+    <select id="findByStudentId" resultMap="StudentCourseResultMap">
+        SELECT id, course_name, student_id, course_start_at, course_end_at
+        FROM student_courses
+        WHERE student_id = #{studentId}
     </select>
+
+    <!-- 新しいコースを挿入 -->
+    <insert id="insertCourse" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student_courses (course_name, student_id, course_start_at, course_end_at)
+        VALUES (#{courseName}, #{studentId}, #{courseStartAt}, #{courseEndAt})
+    </insert>
+
+    <!-- 特定のコースを更新 -->
+    <update id="updateCourse">
+        UPDATE student_courses
+        SET course_name     = #{courseName},
+            course_start_at = #{courseStartAt},
+            course_end_at   = #{courseEndAt}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 特定のコースを削除 -->
+    <delete id="deleteCourse">
+        DELETE
+        FROM student_courses
+        WHERE id = #{id}
+    </delete>
 
 </mapper>
