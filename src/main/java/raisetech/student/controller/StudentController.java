@@ -93,11 +93,11 @@ public class StudentController {
             Student save = studentService.save(student);
 
             // 2. 学生に紐づくコース情報を保存
-            List<StudentCourse> saveCourse = student.getStudentCourses(); // コース情報を取得
-            if (saveCourse != null && !saveCourse.isEmpty()) {
+            List<StudentCourse> courseList = student.getStudentCourses(); // コース情報を取得
+            if (courseList != null && !courseList.isEmpty()) {
                 Long studentId = student.getId(); // StudentオブジェクトからIDを取得
-                saveCourse.forEach(course -> course.setStudentId(studentId)); // 各コースにstudentIdを設定
-                studentCourseService.saveCourse(saveCourse, studentId); // studentIdを渡す
+                courseList.forEach(course -> course.setStudentId(studentId)); // 各コースにstudentIdを設定
+                studentCourseService.courseList(courseList, studentId); // studentIdを渡す
             }
 
             // 3. 登録成功レスポンスを返却
@@ -155,7 +155,7 @@ public class StudentController {
             // コース情報を一括保存・更新
             List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
             if (updatedCourses != null && !updatedCourses.isEmpty()) {
-                studentCourseService.saveCourse(updatedCourses, id); // `saveCourse` を呼び出し
+                studentCourseService.courseList(updatedCourses, id); // `courseList` を呼び出し
             }
 
             // 正常なレスポンスを返却

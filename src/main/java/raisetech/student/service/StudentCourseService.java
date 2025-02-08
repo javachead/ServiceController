@@ -63,7 +63,7 @@ public class StudentCourseService {
      * @param courses   保存または更新するコースリスト
      * @param studentId 学生ID
      */
-    public void saveCourse(List<StudentCourse> courses, Long studentId) {
+    public void courseList(List<StudentCourse> courses, Long studentId) {
         log.info("学生ID {} に紐づくコース情報を保存または更新します。件数: {}", studentId, courses.size());
 
         // 学生に関連する既存のコース情報を取得
