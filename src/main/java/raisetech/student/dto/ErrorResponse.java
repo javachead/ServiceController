@@ -1,17 +1,28 @@
 package raisetech.student.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-// Lombokを利用したコンストラクタ生成
+/**
+ * エラーレスポンスDTOクラス
+ * エラー発生時にクライアントへ返却する詳細情報を含む構造。
+ */
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ErrorResponse {
-    private final String message;
-    private final HttpStatus httpStatus;
 
-    // 引数3つのカスタムコンストラクタ
-    public ErrorResponse(String message, String details, int statusCode) {
+    private int status; // ステータスコード (例: 400, 404, 500)
+    private String message; // 表示用エラーメッセージ
+    private String details; // 詳細情報
+    private String timestamp; // エラーメッセージのタイムスタンプ
+
+    public ErrorResponse(String status, String message, int details) {
+        this.status = Integer.parseInt(status);
         this.message = message;
-        this.httpStatus = HttpStatus.valueOf(statusCode); // 数値コードを HttpStatus に変換
+        this.details = String.valueOf(details);
     }
 }
