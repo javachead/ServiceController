@@ -34,9 +34,7 @@ import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 学生管理APIのRESTコントローラー。
@@ -69,7 +67,6 @@ public class StudentController {
      * @param id 学生ID (1以上の値である必要あり)
      * @return 成功時に学生情報を返す
      * @throws StudentNotFoundException 学生IDが存在しない場合にスローされる
-     * @throws RuntimeException         その他のサーバーエラー発生時にスローされる
      */
     @GetMapping("/{id}")
     @Operation(
@@ -111,11 +108,10 @@ public class StudentController {
                                     name = "未登録IDエラー例",
                                     value = """
                                             {
-                                                "status": 404,
-                                                "message": "指定された学生IDが存在しません。",
-                                                "details": "学生が見つかりません: ID = 1000",
-                                                "timestamp": null,
-                                                "errorTime": "2023-02-09T20:35:31.843501"
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
                                             }
                                             """
                             )
@@ -131,10 +127,10 @@ public class StudentController {
                                     name = "サーバーエラー例",
                                     value = """
                                             {
-                                                "status": 500,
-                                                "error": "Internal Server Error",
-                                                "message": "データ取得中にエラーが発生しました",
-                                                "path": "/api/students"
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
                                             }
                                             """
                             )
@@ -142,15 +138,11 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
-        try {
-            // 学生情報の取得
-            Student student = studentService.getStudentById(id);
-            return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
-        } catch (StudentNotFoundException ex) {
-            throw ex;
-        } catch (Exception e) {
-            throw new RuntimeException("学生情報を取得中にサーバーエラーが発生しました", e);
-        }
+        // IDをもとに学生情報を取得。見つからない場合は例外をスロー
+        Student student = studentService.getStudentById(id);
+
+        // 成功時のレスポンス
+        return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
     }
 
     /**
@@ -230,27 +222,41 @@ public class StudentController {
                     )
             )
     })
+    @ApiResponse(
+            responseCode = "500",
+            description = "サーバー内部エラー",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "サーバーエラー例",
+                            value = """
+                                    {
+                                      "status": 500,
+                                      "message": "エラーが発生しました",
+                                      "details": "ERROR",
+                                      "timestamp": "2023-11-02 12:34:56"
+                                    }
+                                    """
+                    )
+            )
+    )
+
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
-        try {
-            // 1. 学生情報を保存
-            Student save = studentService.save(student);
+        // 1. 学生情報を保存
+        Student savedStudent = studentService.save(student);
 
-            // 2. 学生に紐づくコース情報を保存
-            List<StudentCourse> courseList = student.getStudentCourses(); // コース情報を取得
-            if (courseList != null && !courseList.isEmpty()) {
-                Long studentId = student.getId(); // StudentオブジェクトからIDを取得
-                courseList.forEach(course -> course.setStudentId(studentId)); // 各コースにstudentIdを設定
-                studentCourseService.courseList(courseList, studentId); // studentIdを渡す
-            }
-
-            // 3. 登録成功レスポンスを返却
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", save));
-        } catch (Exception e) {
-            // サーバーエラー時のハンドリング
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentAddResponse("エラー: 学生および関連コースの登録に失敗しました", student));
+        // 2. 学生に紐づくコース情報を保存
+        List<StudentCourse> courseList = student.getStudentCourses();
+        if (courseList != null && !courseList.isEmpty()) {
+            Long studentId = savedStudent.getId(); // 保存後に学生IDを取得
+            courseList.forEach(course -> course.setStudentId(studentId)); // 各コースに学生IDを設定
+            studentCourseService.courseList(courseList, studentId);
         }
+
+        // 3. 登録成功レスポンスを返却
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
     }
 
     /**
@@ -301,10 +307,10 @@ public class StudentController {
                                     name = "学生が存在しない例",
                                     value = """
                                             {
-                                                "status": 404,
-                                                "error": "Not Found",
-                                                "message": "指定された学生IDは存在しません",
-                                                "path": "/api/students/10"
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
                                             }
                                             """
                             )
@@ -320,10 +326,10 @@ public class StudentController {
                                     name = "サーバーエラー例",
                                     value = """
                                             {
-                                                "status": 500,
-                                                "error": "Internal Server Error",
-                                                "message": "学生更新処理に失敗しました",
-                                                "path": "/api/students/1"
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
                                             }
                                             """
                             )
@@ -333,29 +339,26 @@ public class StudentController {
     public ResponseEntity<StudentResponse> updateStudent(
             @PathVariable @Min(1) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
-        try {
-            // 学生データの更新処理
-            Student updatedStudent = studentDetail.getStudent();
-            updatedStudent.setId(id);
 
-            // 学生情報を保存または更新
-            studentService.save(updatedStudent);
+        // 学生データの更新処理
+        Student updatedStudent = studentDetail.getStudent();
+        updatedStudent.setId(id);
 
-            // コース情報を一括保存・更新
-            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-            if (updatedCourses != null && !updatedCourses.isEmpty()) {
-                studentCourseService.courseList(updatedCourses, id); // `courseList` を呼び出し
-            }
-
-            // 正常なレスポンスを返却
-            return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
-        } catch (StudentNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new StudentResponse("指定された学生IDは存在しません", null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentResponse("学生更新処理に失敗しました", null));
+        // 学生情報を保存または更新
+        if (studentService.getStudentById(id) == null) {
+            throw new StudentNotFoundException("指定された学生IDは存在しません: ID = " + id);
         }
+
+        // 学生情報の更新
+        studentService.save(updatedStudent);
+
+        // コース情報を一括保存・更新
+        List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
+        if (updatedCourses != null && !updatedCourses.isEmpty()) {
+            studentCourseService.courseList(updatedCourses, id);
+        }
+
+        return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
     }
 
     /**
@@ -435,7 +438,7 @@ public class StudentController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400",
+                    responseCode = "404",
                     description = "データ無し",
                     content = @Content(
                             mediaType = "application/json",
@@ -444,8 +447,10 @@ public class StudentController {
                                     name = "データ無し例",
                                     value = """
                                             {
-                                                "message": "学生データが存在しません",
-                                                "students": []
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
                                             }
                                             """
                             )
@@ -461,10 +466,10 @@ public class StudentController {
                                     name = "サーバーエラー例",
                                     value = """
                                             {
-                                                "status": 500,
-                                                "error": "Internal Server Error",
-                                                "message": "データ取得中にエラーが発生しました",
-                                                "path": "/api/students"
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
                                             }
                                             """
                             )
@@ -472,20 +477,15 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentsResponse> getAllStudents() {
-        try {
-            // 学生一覧を取得
-            Optional<List<StudentDetail>> optionalStudents =
-                    Optional.ofNullable(studentDetailService.findAllStudentDetails());
-            List<StudentDetail> students = optionalStudents.orElse(Collections.emptyList());
+        // 学生一覧取得
+        List<StudentDetail> students = studentDetailService.findAllStudentDetails();
 
-            // データが存在しない場合のレスポンス
-            if (students.isEmpty()) {
-                return ResponseEntity.ok(new StudentsResponse("学生データが存在しません", students));
-            }
-            return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        // データが存在しない場合、StudentNotFoundExceptionをスロー
+        if (students.isEmpty()) {
+            throw new StudentNotFoundException("学生データが存在しません");
         }
+
+        return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
     }
 
     /**
@@ -532,10 +532,10 @@ public class StudentController {
                                     name = "学生ID未登録例",
                                     value = """
                                             {
-                                                "status": 404,
-                                                "error": "Not Found",
-                                                "message": "指定された学生IDが存在しません",
-                                                "path": "/api/students/99"
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
                                             }
                                             """
                             )
@@ -551,10 +551,10 @@ public class StudentController {
                                     name = "サーバーエラー例",
                                     value = """
                                             {
-                                                "status": 500,
-                                                "error": "Internal Server Error",
-                                                "message": "データ取得中にエラーが発生しました",
-                                                "path": "/api/students"
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
                                             }
                                             """
                             )
@@ -562,17 +562,10 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
-        try {
-            studentService.deleteStudentById(id);
-            // クライアントに論理削除の具体的な説明を避ける
-            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
-        } catch (StudentNotFoundException ex) {
-            // 存在しない場合は404を返却
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new StudentDeleteResponse("指定された学生IDが存在しません"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentDeleteResponse("削除処理に失敗しました"));
-        }
+        // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
+        studentService.deleteStudentById(id);
+
+        // 正常終了時のレスポンス
+        return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
     }
 }
