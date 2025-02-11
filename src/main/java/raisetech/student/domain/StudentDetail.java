@@ -1,5 +1,8 @@
 package raisetech.student.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,14 +17,20 @@ import java.util.List;
  * 学生情報 (Student) と紐付くコース情報 (StudentCourse) を管理します。
  * バリデーションは @Valid による Bean Validation を使用。
  */
+@Schema(description = "受講生詳細情報 - 学生情報と登録されているコース情報のセット")
 @Setter
 @Getter
 public class StudentDetail {
 
     @Valid
+    @Schema(description = "学生情報", implementation = Student.class)
     private Student student; // 学生情報を保持
 
     @Valid
+    @ArraySchema(
+            schema = @Schema(description = "登録済みのコース情報", implementation = StudentCourse.class)
+    )
+    @JsonIgnore // student内のデータと重複しないように除外
     private List<StudentCourse> studentCourses; // 学生が登録しているコース情報のリスト
 
     /**

@@ -1,5 +1,12 @@
 package raisetech.student.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
@@ -17,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
+import raisetech.student.dto.ErrorResponse;
 import raisetech.student.dto.StudentAddResponse;
 import raisetech.student.dto.StudentDeleteResponse;
 import raisetech.student.dto.StudentResponse;
@@ -26,9 +34,7 @@ import raisetech.student.service.StudentCourseService;
 import raisetech.student.service.StudentDetailService;
 import raisetech.student.service.StudentService;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 学生管理APIのRESTコントローラー。
@@ -42,6 +48,7 @@ import java.util.Optional;
  */
 @Validated
 @RestController
+@Tag(name = "学生管理API", description = "学生データおよび関連コースデータを管理するAPI")
 @RequestMapping("/api/students")
 public class StudentController {
 
@@ -53,6 +60,90 @@ public class StudentController {
 
     // 学生情報に関するサービスクラス
     private final StudentService studentService;
+
+    /**
+     * 指定されたIDの学生情報を取得するエンドポイント。
+     *
+     * @param id 学生ID (1以上の値である必要あり)
+     * @return 成功時に学生情報を返す
+     * @throws StudentNotFoundException 学生IDが存在しない場合にスローされる
+     */
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "指定されたIDの学生情報を取得",
+            description = """
+                          指定された学生IDに基づき、学生情報を取得します。
+                          - 入力: 学生ID (例: 1001)
+                          - 成功時、学生の詳細情報を返却します。
+                          - 未登録のIDを指定した場合は404エラーとなります。
+                          """,
+            tags = {"学生管理API"},
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "学生情報の取得に成功",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "正常取得例",
+                                    value = """
+                                            {
+                                                "message": "指定されたIDの学生を取得しました",
+                                                "studentId": 1001
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "指定された学生IDが見つかりません。",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "未登録IDエラー例",
+                                    value = """
+                                            {
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "データ取得中にエラーが発生しました",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "サーバーエラー例",
+                                    value = """
+                                            {
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
+        // IDをもとに学生情報を取得。見つからない場合は例外をスロー
+        Student student = studentService.getStudentById(id);
+
+        // 成功時のレスポンス
+        return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
+    }
 
     /**
      * コンストラクターインジェクションを通じてサービスを注入。
@@ -87,48 +178,85 @@ public class StudentController {
 
     @Transactional
     @PostMapping
+    @Operation(
+            summary = "新しい学生を登録",
+            description = """
+                          学生情報をデータベースに登録し、関連するコース情報も同時に保存します。
+                          - 入力データはJSON形式です。
+                          - 成功時に登録された学生情報を返します。
+                          """,
+            tags = {"学生管理API"}
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "学生情報および関連コースが正常に保存されました",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentAddResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "登録成功例",
+                                    value = """
+                                            {   "id": 1,
+                                                "name": "田中太郎",
+                                                "kanaName": "タナカタロウ",
+                                                "nickname": "taro123",
+                                                "email": "tanaka.taro@example.com",
+                                                "area": "東京都新宿区",
+                                                "age": 30,
+                                                "sex": "男性",
+                                                "remark": "特記事項なし",
+                                                "deleted": false,
+                                                "studentCourses": [
+                                                    {
+                                                        "id": 1,
+                                                        "studentId": 1,
+                                                        "courseName": "Javaプログラミング入門",
+                                                        "courseStartAt": "2023-01-10",
+                                                        "courseEndAt": "2023-03-20"
+                                                    }
+                                                ]
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @ApiResponse(
+            responseCode = "500",
+            description = "サーバー内部エラー",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "サーバーエラー例",
+                            value = """
+                                    {
+                                      "status": 500,
+                                      "message": "エラーが発生しました",
+                                      "details": "ERROR",
+                                      "timestamp": "2023-11-02 12:34:56"
+                                    }
+                                    """
+                    )
+            )
+    )
+
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
-        try {
-            // 1. 学生情報を保存
-            Student save = studentService.save(student);
+        // 1. 学生情報を保存
+        Student savedStudent = studentService.save(student);
 
-            // 2. 学生に紐づくコース情報を保存
-            List<StudentCourse> courseList = student.getStudentCourses(); // コース情報を取得
-            if (courseList != null && !courseList.isEmpty()) {
-                Long studentId = student.getId(); // StudentオブジェクトからIDを取得
-                courseList.forEach(course -> course.setStudentId(studentId)); // 各コースにstudentIdを設定
-                studentCourseService.courseList(courseList, studentId); // studentIdを渡す
-            }
-
-            // 3. 登録成功レスポンスを返却
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", save));
-        } catch (Exception e) {
-            // サーバーエラー時のハンドリング
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentAddResponse("エラー: 学生および関連コースの登録に失敗しました", student));
+        // 2. 学生に紐づくコース情報を保存
+        List<StudentCourse> courseList = student.getStudentCourses();
+        if (courseList != null && !courseList.isEmpty()) {
+            Long studentId = savedStudent.getId(); // 保存後に学生IDを取得
+            courseList.forEach(course -> course.setStudentId(studentId)); // 各コースに学生IDを設定
+            studentCourseService.courseList(courseList, studentId);
         }
-    }
 
-    /**
-     * 指定されたIDの学生情報を取得するエンドポイント。
-     *
-     * @param id 学生ID (1以上の値である必要あり)
-     * @return 成功時に学生情報を返す
-     * @throws StudentNotFoundException 学生IDが存在しない場合にスローされる
-     * @throws RuntimeException         その他のサーバーエラー発生時にスローされる
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
-        try {
-            // 学生情報の取得
-            Student student = studentService.getStudentById(id);
-            return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
-        } catch (StudentNotFoundException ex) {
-            throw ex;
-        } catch (Exception e) {
-            throw new RuntimeException("サーバーエラーが発生しました", e);
-        }
+        // 3. 登録成功レスポンスを返却
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
     }
 
     /**
@@ -141,32 +269,96 @@ public class StudentController {
      */
     @Transactional
     @PutMapping("/{id}")
+    @Operation(
+            summary = "学生情報を更新",
+            description = """
+                          学生IDを指定し、学生情報および関連するコース情報を更新します。
+                          - 指定されたIDに基づいて更新を行います。
+                          - 学生データおよび関連するコースデータを一括で更新可能です。
+                          """,
+            tags = {"学生管理API"},
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "更新成功",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "更新成功例",
+                                    value = """
+                                            {
+                                                "message": "学生データが正常に更新されました",
+                                                "studentId": 1001
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "学生が存在しない",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "学生が存在しない例",
+                                    value = """
+                                            {
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "サーバー内部エラー",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "サーバーエラー例",
+                                    value = """
+                                            {
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     public ResponseEntity<StudentResponse> updateStudent(
             @PathVariable @Min(1) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
-        try {
-            // 学生データの更新処理
-            Student updatedStudent = studentDetail.getStudent();
-            updatedStudent.setId(id);
 
-            // 学生情報を保存または更新
-            studentService.save(updatedStudent);
+        // 学生データの更新処理
+        Student updatedStudent = studentDetail.getStudent();
+        updatedStudent.setId(id);
 
-            // コース情報を一括保存・更新
-            List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-            if (updatedCourses != null && !updatedCourses.isEmpty()) {
-                studentCourseService.courseList(updatedCourses, id); // `courseList` を呼び出し
-            }
-
-            // 正常なレスポンスを返却
-            return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
-        } catch (StudentNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new StudentResponse("指定された学生IDは存在しません", null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentResponse("学生更新処理に失敗しました", null));
+        // 学生情報を保存または更新
+        if (studentService.getStudentById(id) == null) {
+            throw new StudentNotFoundException("指定された学生IDは存在しません: ID = " + id);
         }
+
+        // 学生情報の更新
+        studentService.save(updatedStudent);
+
+        // コース情報を一括保存・更新
+        List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
+        if (updatedCourses != null && !updatedCourses.isEmpty()) {
+            studentCourseService.courseList(updatedCourses, id);
+        }
+
+        return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
     }
 
     /**
@@ -176,21 +368,124 @@ public class StudentController {
      * @throws Exception サーバー内でエラーが発生した場合
      */
     @GetMapping
+    @Operation(
+            summary = "全学生情報を取得",
+            description = """
+                          登録されているすべての学生情報を取得します。
+                          - ※全件取得のため、ページング対象外です。
+                          - データが存在しない場合は応答を返します。
+                          """,
+            tags = {"学生管理API"},
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "取得成功",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentsResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "データ存在時",
+                                    value = """
+                                            {
+                                                "message": "学生一覧を取得しました",
+                                                "students": [
+                                                    {
+                                                        "name": "田中太郎",
+                                                        "kanaName": "タナカタロウ",
+                                                        "nickname": "taro123",
+                                                        "email": "tanaka.taro@example.com",
+                                                        "area": "東京都新宿区",
+                                                        "age": 30,
+                                                        "sex": "男性",
+                                                        "remark": "Javaに興味があります",
+                                                        "deleted": false,
+                                                        "studentCourses": [
+                                                            {
+                                                                "id": 1,
+                                                                "studentId": 1001,
+                                                                "courseName": "Javaプログラミング入門",
+                                                                "courseStartAt": "2023-01-10",
+                                                                "courseEndAt": "2023-03-20",
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "山田花子",
+                                                        "kanaName": "ヤマダハナコ",
+                                                        "nickname": "hana456",
+                                                        "email": "yamada.hana@example.com",
+                                                        "area": "大阪府大阪市",
+                                                        "age": 25,
+                                                        "sex": "女性",
+                                                        "remark": "フロントエンド開発を学んでいます",
+                                                        "deleted": false,
+                                                        "studentCourses": [
+                                                            {
+                                                                "id":2,
+                                                                "studentId": 1002,
+                                                                "courseName": "JavaScript",
+                                                                "courseStartAt": "2023-07-01",
+                                                                "courseEndAt": "2023-09-30",
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "データ無し",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentsResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "データ無し例",
+                                    value = """
+                                            {
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "サーバー内部エラー",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "サーバーエラー例",
+                                    value = """
+                                            {
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     public ResponseEntity<StudentsResponse> getAllStudents() {
-        try {
-            // 学生一覧を取得
-            Optional<List<StudentDetail>> optionalStudents =
-                    Optional.ofNullable(studentDetailService.findAllStudentDetails());
-            List<StudentDetail> students = optionalStudents.orElse(Collections.emptyList());
+        // 学生一覧取得
+        List<StudentDetail> students = studentDetailService.findAllStudentDetails();
 
-            // データが存在しない場合のレスポンス
-            if (students.isEmpty()) {
-                return ResponseEntity.ok(new StudentsResponse("学生データが存在しません", students));
-            }
-            return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        // データが存在しない場合、StudentNotFoundExceptionをスロー
+        if (students.isEmpty()) {
+            throw new StudentNotFoundException("学生データが存在しません");
         }
+
+        return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
     }
 
     /**
@@ -201,18 +496,76 @@ public class StudentController {
      * @throws StudentNotFoundException 学生IDが存在しない場合
      */
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "学生情報を削除",
+            description = """
+                          学生IDを指定し、該当する学生情報を削除します。
+                          - 論理削除のため、データ自体は保持されます。
+                          """,
+            tags = {"学生管理API"},
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "削除成功",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = StudentDeleteResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "削除成功例",
+                                    value = """
+                                            {
+                                                "message": "学生が削除されました"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "学生が存在しない",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "学生ID未登録例",
+                                    value = """
+                                            {
+                                              "status": 404,
+                                              "message": "学生データが見つかりませんでした。",
+                                              "details": "学生が見つかりません: ID = 1000000",
+                                              "timestamp": "2025-02-11T05:37:37"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "データ取得中にエラーが発生しました",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                    name = "サーバーエラー例",
+                                    value = """
+                                            {
+                                              "status": 500,
+                                              "message": "エラーが発生しました",
+                                              "details": "ERROR",
+                                              "timestamp": "2023-11-02 12:34:56"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
-        try {
-            studentService.deleteStudentById(id);
-            // クライアントに論理削除の具体的な説明を避ける
-            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
-        } catch (StudentNotFoundException ex) {
-            // 存在しない場合は404を返却
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new StudentDeleteResponse("指定された学生IDが存在しません"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new StudentDeleteResponse("削除処理に失敗しました"));
-        }
+        // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
+        studentService.deleteStudentById(id);
+
+        // 正常終了時のレスポンス
+        return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
     }
 }

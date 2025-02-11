@@ -60,7 +60,9 @@ dependencies {
     // テスト用ライブラリ
     testImplementation 'org.springframework.boot:spring-boot-starter-test' // Spring Bootのテスト依存関係
     runtimeOnly 'com.h2database:h2' // 組み込みテスト用データベース
-    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0' // JPAとしての永続化管理API
+
+    // springdoc-openapi for Swagger UI（http://localhost:8081/swagger-ui/index.html）
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 }
 
 tasks.withType(JavaCompile).configureEach {

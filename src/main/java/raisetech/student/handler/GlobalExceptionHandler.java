@@ -68,9 +68,9 @@ public class GlobalExceptionHandler {
         log.warn("【入力データ制約違反】: {}", ex.getMessage());
 
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
                 "入力データに問題があります",
-                ex.getMessage(),
-                HttpStatus.BAD_REQUEST.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -82,9 +82,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException ex) {
         log.warn("【JSONフォーマットエラー】: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
                 "リクエストJSONの形式が正しくありません。",
-                ex.getMessage(),
-                HttpStatus.BAD_REQUEST.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -96,9 +96,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
         log.warn("【HTTPメソッドエラー】: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
                 "サポートされていないHTTPメソッドです。",
-                ex.getMessage(),
-                HttpStatus.METHOD_NOT_ALLOWED.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
     }
@@ -110,9 +110,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         log.warn("【必須パラメータエラー】: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
                 "必須パラメータが不足しています。",
-                ex.getMessage(),
-                HttpStatus.BAD_REQUEST.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -124,9 +124,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         log.warn("【アップロードサイズ制限エラー】: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE.value(),
                 "アップロード可能なファイルサイズを超えています。",
-                ex.getMessage(),
-                HttpStatus.PAYLOAD_TOO_LARGE.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
     }
@@ -138,9 +138,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex) {
         log.warn("【ページ未検出エラー】: {}", ex.getMessage());
         ErrorResponse response = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
                 "指定されたURLのページが見つかりません。",
-                ex.getMessage(),
-                HttpStatus.NOT_FOUND.value()
+                ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
@@ -156,9 +156,9 @@ public class GlobalExceptionHandler {
         log.warn("【StudentNotFoundException】: {}", ex.getMessage());
 
         ErrorResponse response = new ErrorResponse(
-                "指定された学生IDが見つかりませんでした。",
-                ex.getMessage(),
-                HttpStatus.NOT_FOUND.value()
+                HttpStatus.NOT_FOUND.value(),
+                "学生データが見つかりませんでした。",
+                ex.getMessage()
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -175,9 +175,9 @@ public class GlobalExceptionHandler {
         log.error("【予期しないエラー発生】: {}", ex.getMessage(), ex);
 
         ErrorResponse response = new ErrorResponse(
-                "サーバーエラーが発生しました。サポートに連絡してください。",
-                "An unexpected error occurred.",
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "エラーが発生しました",
+                "An unexpected error occurred."
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
