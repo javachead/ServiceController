@@ -243,20 +243,41 @@ public class StudentController {
     )
 
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
-        // 1. 学生情報を保存
-        Student savedStudent = studentService.save(student);
+        try {
+            // 1. 学生情報を保存
+            Student savedStudent = studentService.save(null, student); // IDをnullにしてDBで自動生成
 
-        // 2. 学生に紐づくコース情報を保存
-        List<StudentCourse> courseList = student.getStudentCourses();
-        if (courseList != null && !courseList.isEmpty()) {
-            Long studentId = savedStudent.getId(); // 保存後に学生IDを取得
-            courseList.forEach(course -> course.setStudentId(studentId)); // 各コースに学生IDを設定
-            studentCourseService.courseList(courseList, studentId);
+            // 2. 学生に紐づくコース情報を保存
+            saveCourses(savedStudent, student.getStudentCourses());
+
+            // 3. 登録成功レスポンスを返却
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
+        } catch (Exception e) {
+            e.printStackTrace();
+            // エラー時レスポンスを返却
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
+    }
+
+    // 学生情報を保存するメソッド
+    private Student saveStudent(Student student) {
+        return studentService.save(null, student); // IDをnullにしてDBで生成
+    }
+
+    // 学生に紐づくコース情報を保存するメソッド
+    private void saveCourses(Student savedStudent, List<StudentCourse> courses) {
+        if (courses == null || courses.isEmpty()) {
+            return;
         }
 
-        // 3. 登録成功レスポンスを返却
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
+        // 保存後の学生IDをコースに割り当て
+        Long studentId = savedStudent.getId();
+        courses.forEach(course -> course.setStudentId(studentId));
+
+        // サービス経由で保存
+        studentCourseService.courseList(courses, studentId);
     }
 
     /**
@@ -350,7 +371,7 @@ public class StudentController {
         }
 
         // 学生情報の更新
-        studentService.save(updatedStudent);
+        studentService.save(id, updatedStudent);
 
         // コース情報を一括保存・更新
         List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();

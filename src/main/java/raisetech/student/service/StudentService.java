@@ -41,7 +41,7 @@ public class StudentService {
     /**
      * 新しい学生情報を登録＆既存学生の情報を更新します。
      */
-    public Student save(Student student) {
+    public Student save(Long id, Student student) {
         // IDがnullの場合は新規保存、そうでない場合は更新
         if (student.getId() == null) {
             return studentRepository.save(student);

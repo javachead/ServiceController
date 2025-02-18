@@ -60,6 +60,8 @@ dependencies {
     // テスト用ライブラリ
     testImplementation 'org.springframework.boot:spring-boot-starter-test' // Spring Bootのテスト依存関係
     runtimeOnly 'com.h2database:h2' // 組み込みテスト用データベース
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' // JUnit 5
+    testImplementation 'org.mockito:mockito-core:5.5.0' // 必要ならMockライブラリ
 
     // springdoc-openapi for Swagger UI（http://localhost:8081/swagger-ui/index.html）
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
@@ -72,4 +74,12 @@ tasks.withType(JavaCompile).configureEach {
     }
     // JVMオプションを追加
     options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true' // JVMに自己アタッチを許可する設定
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs '-XX:+EnableDynamicAgentLoading'
+}
+
+tasks.test {
+    useJUnitPlatform() // JUnit 5を使用
 }
