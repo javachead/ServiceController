@@ -3,6 +3,7 @@ package raisetech.student.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
 
@@ -25,6 +26,21 @@ public class StudentCourseService {
     public List<StudentCourse> findByStudentId(Long studentId) {
         log.info("学生ID={} のコースを取得します。", studentId);
         return studentCourseRepository.findByStudentId(studentId);
+    }
+
+    public void saveCourses(Student savedStudent, List<StudentCourse> courses) {
+        if (courses == null || courses.isEmpty()) {
+            log.warn("コースリストが空です。保存処理を終了します。");
+            return;
+        }
+
+        // 保存後の学生IDをコースに割り当て
+        Long studentId = savedStudent.getId();
+        courses.forEach(course -> course.setStudentId(studentId));
+
+        // サービス内で保存を実施
+        courseList(courses, studentId);
+        log.info("学生 {} に関連するコースを保存しました。", studentId);
     }
 
     /**

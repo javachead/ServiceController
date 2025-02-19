@@ -62,6 +62,21 @@ public class StudentController {
     private final StudentService studentService;
 
     /**
+     * コンストラクターインジェクションを通じてサービスを注入。
+     *
+     * @param studentCourseService 学生コース管理サービス
+     * @param studentDetailService 学生詳細情報管理サービス
+     * @param studentService       学生管理サービス
+     */
+    public StudentController(StudentCourseService studentCourseService,
+                             StudentDetailService studentDetailService,
+                             StudentService studentService) {
+        this.studentCourseService = studentCourseService;
+        this.studentDetailService = studentDetailService;
+        this.studentService = studentService;
+    }
+
+    /**
      * 指定されたIDの学生情報を取得するエンドポイント。
      *
      * @param id 学生ID (1以上の値である必要あり)
@@ -146,22 +161,6 @@ public class StudentController {
     }
 
     /**
-     * コンストラクターインジェクションを通じてサービスを注入。
-     *
-     * @param studentCourseService 学生コース管理サービス
-     * @param studentDetailService 学生詳細情報管理サービス
-     * @param studentService       学生管理サービス
-     */
-
-    public StudentController(StudentCourseService studentCourseService,
-                             StudentDetailService studentDetailService,
-                             StudentService studentService) {
-        this.studentCourseService = studentCourseService;
-        this.studentDetailService = studentDetailService;
-        this.studentService = studentService;
-    }
-
-    /**
      * 新しい学生情報を登録し、関連するコース情報も保存します。
      * <p>
      * このメソッドはトランザクション管理下で動作し、以下の操作を実行します：
@@ -175,7 +174,6 @@ public class StudentController {
      * @return 保存に成功した場合、作成された学生情報を含むレスポンス（201 Created）。
      * 失敗した場合、エラーメッセージを含むレスポンス（500 Internal Server Error）。
      */
-
     @Transactional
     @PostMapping
     @Operation(
@@ -241,14 +239,13 @@ public class StudentController {
                     )
             )
     )
-
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
         try {
             // 1. 学生情報を保存
             Student savedStudent = studentService.save(null, student); // IDをnullにしてDBで自動生成
 
             // 2. 学生に紐づくコース情報を保存
-            saveCourses(savedStudent, student.getStudentCourses());
+            studentCourseService.saveCourses(savedStudent, student.getStudentCourses());
 
             // 3. 登録成功レスポンスを返却
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -259,25 +256,6 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
-    }
-
-    // 学生情報を保存するメソッド
-    private Student saveStudent(Student student) {
-        return studentService.save(null, student); // IDをnullにしてDBで生成
-    }
-
-    // 学生に紐づくコース情報を保存するメソッド
-    private void saveCourses(Student savedStudent, List<StudentCourse> courses) {
-        if (courses == null || courses.isEmpty()) {
-            return;
-        }
-
-        // 保存後の学生IDをコースに割り当て
-        Long studentId = savedStudent.getId();
-        courses.forEach(course -> course.setStudentId(studentId));
-
-        // サービス経由で保存
-        studentCourseService.courseList(courses, studentId);
     }
 
     /**
@@ -378,7 +356,6 @@ public class StudentController {
         if (updatedCourses != null && !updatedCourses.isEmpty()) {
             studentCourseService.courseList(updatedCourses, id);
         }
-
         return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
     }
 
