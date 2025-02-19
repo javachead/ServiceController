@@ -6,16 +6,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
+import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
 import raisetech.student.service.StudentCourseService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -39,46 +40,59 @@ public class StudentCourseServiceTest {
     @InjectMocks
     private StudentCourseService sut; // テスト対象クラス
 
+    /**
+     * 学生IDでコースを検索するメソッドの正常系テスト.
+     */
     @Test
     public void 学生IDでコースを検索するメソッドの正常系テスト() {
         // モックデータ作成
-        StudentCourse mockCourse = new StudentCourse(
+        StudentCourse expectedCourse = new StudentCourse(
                 1L, 101L, "Java", LocalDate.of(2023, 1, 10), LocalDate.of(2023, 3, 15)
         );
+        List<StudentCourse> expectedList = List.of(expectedCourse); // 期待値リストを作成
 
-        // モック設定
-        when(studentCourseRepository.findByStudentId(101L)).thenReturn(List.of(mockCourse));
+        // モック設定: StudentCourseRepositoryによる返却データを指定
+        when(studentCourseRepository.findByStudentId(101L)).thenReturn(expectedList);
 
         // サービスメソッド実行
         List<StudentCourse> result = sut.findByStudentId(101L);
 
-        // 結果の検証
-        assertEquals(1, result.size());
-        assertEquals("Java", result.get(0).getCourseName());
+        // 結果の検証:内容が一致しているかを確認
+        assertEquals(expectedList, result);
     }
 
     /**
-     * 空またはNULL値のデータを扱うテスト
+     * 学生IDがnullの場合にIllegalArgumentExceptionがスローされるテスト
      */
     @Test
-    public void 学生IDがnullまたは開始日がnullのデータのテスト() {
-        // モックデータ作成
-        List<StudentCourse> mockCourses = new ArrayList<>();
-        mockCourses.add(new StudentCourse(
-                3L, 102L, "Python", null, LocalDate.of(2023, 8, 1)
-        ));
+    public void 学生IDがnullで例外がスローされるテスト() {
+        // 実行と検証を同時に行う
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            sut.findByStudentId(null);
+        });
+        // 検証: 例外メッセージの内容を確認する
+        assertEquals("学生IDが指定されていません", exception.getMessage());
+    }
 
-        // モック設定
-        when(studentCourseRepository.findByStudentId(102L)).thenReturn(mockCourses);
+    /**
+     * 開始日がnullの場合にIllegalArgumentExceptionがスローされるテスト
+     */
+    @Test
+    public void 開始日がnullで例外がスローされるテスト() {
+        // モックデータ作成: 開始日がnullのStudentCourseを設定
+        StudentCourse mockCourse = new StudentCourse(3L, 102L, "Python", null, LocalDate.of(2023, 8, 1));
 
-        // サービスメソッドを実行
-        List<StudentCourse> result = sut.findByStudentId(102L);
+        // モックのStudentデータ作成
+        Student mockStudent = new Student();
+        mockStudent.setId(102L); // IDを設定
 
-        // 検証
-        assertEquals(1, result.size());
-        assertEquals("Python", result.get(0).getCourseName());
-        assertNull(result.get(0).getCourseStartAt());
-        assertEquals(LocalDate.of(2023, 8, 1), result.get(0).getCourseEndAt());
+        // テスト対象のメソッドを実行し、例外が発生することを期待
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            // saveCoursesの呼び出し（開始日がnullのコースを含むリストを渡す）
+            sut.saveCourses(mockStudent, Collections.singletonList(mockCourse));
+        });
+        // 例外メッセージを検証する
+        assertEquals("開始日が指定されていません", exception.getMessage());
     }
 
     /**
@@ -134,25 +148,6 @@ public class StudentCourseServiceTest {
     }
 
     /**
-     * 学生IDが存在しない場合に、空のリストが返されることをテストします。
-     */
-    @Test
-    public void 学生IDが存在しない場合空のリストが返される() {
-        // モックに空のリストを返すように設定
-        when(studentCourseRepository.findByStudentId(999L)).thenReturn(new ArrayList<>());
-
-        // 空の existingCourses を準備
-        List<StudentCourse> existingCourses = new ArrayList<>(); // missing definition
-
-        // 実行
-        List<StudentCourse> result = sut.findByStudentId(999L);
-        sut.removeUnusedCourses(new ArrayList<>(), existingCourses); // existingCourses を使用
-
-        // 検証
-        assertEquals(0, result.size()); // 空のリストであることを確認
-    }
-
-    /**
      * 新しいコースリストが空の場合に、既存のすべてのコースが削除される動作をテストします。
      */
     @Test
@@ -162,7 +157,6 @@ public class StudentCourseServiceTest {
                 new StudentCourse(1L, 101L, "Java", null, null),
                 new StudentCourse(2L, 101L, "Python", null, null)
         );
-
         // モック設定
         doNothing().when(studentCourseRepository).deleteCourse(anyLong());
 
@@ -199,7 +193,6 @@ public class StudentCourseServiceTest {
         List<StudentCourse> newCourses = List.of(
                 new StudentCourse(null, 101L, "New Course", null, null)
         );
-
         doNothing().when(studentCourseRepository).insertCourse(any(StudentCourse.class));
 
         // 実行
@@ -219,7 +212,6 @@ public class StudentCourseServiceTest {
         List<StudentCourse> newCourses = List.of(
                 new StudentCourse(999L, 101L, "Non-existent Course", null, null)
         );
-
         when(studentCourseRepository.findByStudentId(101L)).thenReturn(existingCourses);
 
         // 実行＆検証
@@ -237,13 +229,11 @@ public class StudentCourseServiceTest {
         List<StudentCourse> existingCourses = List.of(
                 new StudentCourse(1L, 101L, "Java", null, null) // 既存データ
         );
-
         // 新しいコースリストには既存コースを含むが、新しいコースも追加する
         List<StudentCourse> newCourses = List.of(
                 new StudentCourse(1L, 101L, "Java", null, null), // 既存と一致するデータ
                 new StudentCourse(null, 101L, "New Course", null, null) // 新規登録データ
         );
-
         // モック: findByStudentId で既存データを返すよう設定
         when(studentCourseRepository.findByStudentId(101L)).thenReturn(existingCourses);
 
@@ -266,7 +256,6 @@ public class StudentCourseServiceTest {
         List<StudentCourse> existingCourses = List.of(
                 new StudentCourse(1L, 101L, "Java", null, null)
         );
-
         // モック設定
         doNothing().when(studentCourseRepository).deleteCourse(anyLong());
 
@@ -308,7 +297,6 @@ public class StudentCourseServiceTest {
         List<StudentCourse> newCourses = List.of(
                 new StudentCourse(null, 101L, "Course 1", null, null)
         );
-
         // モックで例外発生
         doThrow(RuntimeException.class).when(studentCourseRepository).insertCourse(any(StudentCourse.class));
 
@@ -326,12 +314,10 @@ public class StudentCourseServiceTest {
                 new StudentCourse(1L, 101L, "Java", null, null), // DB上に登録されているデータ
                 new StudentCourse(2L, 102L, "Spring Boot", null, null) // 不要データ
         );
-
         // 新しいコースリスト (newCourses)
         List<StudentCourse> newCourses = List.of(
                 new StudentCourse(1L, 101L, "Java", null, null) // 既存のコースがそのまま維持される
         );
-
         // 削除操作のモック (何もしないよう設定)
         doNothing().when(studentCourseRepository).deleteCourse(anyLong());
 
@@ -340,6 +326,85 @@ public class StudentCourseServiceTest {
 
         // 確認: 削除操作が1回だけ呼び出されたことを確認
         verify(studentCourseRepository, times(1)).deleteCourse(2L);
+        verifyNoMoreInteractions(studentCourseRepository);
+    }
+
+    /*
+     * 不正な入力値が渡された場合に、例外がスローされることをテストします。
+     */
+    @Test
+    public void 存在しないコースIDを更新しようとすると例外をスローする() {
+        // Set up: 存在しないコースID
+        StudentCourse course = new StudentCourse();
+        course.setId(999L); // 存在しないID
+        course.setCourseName("テストコース");
+        course.setCourseStartAt(LocalDate.now().plusDays(1));
+        course.setCourseEndAt(LocalDate.now().plusMonths(6));
+
+        List<StudentCourse> courses = List.of(course);
+
+        // Repository のモック動作設定
+        when(studentCourseRepository.findByStudentId(1L)) // 存在する学生ID
+                .thenReturn(List.of()); // 空リスト返却をシミュレーション
+
+        // アクション: 存在しないIDで更新処理を実行
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> sut.courseList(courses, 1L) // 存在する学生ID
+        );
+        // 検証
+        assertEquals("該当するコースIDが見つかりません: ID=999", exception.getMessage());
+
+        // Repository モックが適切に呼び出されたか検証（オプション）
+        verify(studentCourseRepository, times(1)).findByStudentId(1L);
+    }
+
+    /**
+     * 学生のコース削除処理が正しく動作することを確認するテスト。
+     * 新規および既存リストを検証し、必要ないデータが削除されることを確認します。
+     */
+    @Test
+    public void 削除処理が正しく動作する() {
+        // 削除対象と削除をスキップするデータを準備
+        List<StudentCourse> existingCourses = List.of(
+                new StudentCourse(1L, 101L, "Java", null, null),   // 維持するデータ
+                new StudentCourse(2L, 101L, "Python", null, null)  // 削除するデータ
+        );
+        // ケース1: 正しく削除される
+        List<StudentCourse> newCourses1 = List.of(
+                new StudentCourse(1L, 101L, "Java", null, null)    // 維持されるデータのみ
+        );
+        // ケース2: 既存リストまたは新規リストが空
+        List<StudentCourse> newCourses2 = new ArrayList<>(); // 空の新規リスト
+        List<StudentCourse> emptyCourses = new ArrayList<>(); // 空の既存リスト
+
+        // モックで削除処理を記録
+        doNothing().when(studentCourseRepository).deleteCourse(2L);
+
+        // サービス実行1: 削除対象が存在する
+        sut.removeUnusedCourses(newCourses1, existingCourses);
+        verify(studentCourseRepository, times(1)).deleteCourse(2L);
+
+        // サービス実行2: リストが空の場合
+        sut.removeUnusedCourses(newCourses2, emptyCourses);
+        verifyNoMoreInteractions(studentCourseRepository);
+    }
+
+    /**
+     * 新規コースリストや既存コースリストが空の場合でも正常に動作することを確認するテスト。
+     * 削除操作が呼び出されないことを検証。
+     */
+    @Test
+    public void 既存リストや新規リストが空の場合でも正常動作する() {
+        // 新しいコースリストが空
+        List<StudentCourse> newCourses = new ArrayList<>();
+        // 既存のコースリストが空
+        List<StudentCourse> existingCourses = new ArrayList<>();
+
+        // サービス実行
+        sut.removeUnusedCourses(newCourses, existingCourses);
+
+        // 検証：リポジトリの削除操作が呼ばれていない
         verifyNoMoreInteractions(studentCourseRepository);
     }
 }
