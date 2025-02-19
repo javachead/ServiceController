@@ -153,11 +153,17 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
-        // IDをもとに学生情報を取得。見つからない場合は例外をスロー
-        Student student = studentService.getStudentById(id);
+        try {
+            // IDをもとに学生情報を取得。見つからない場合は例外をスロー
+            Student student = studentService.getStudentById(id);
 
-        // 成功時のレスポンス
-        return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
+            // 成功時のレスポンス
+            return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
+        } catch (StudentNotFoundException ex) {
+            throw new StudentNotFoundException("学生が見つかりません: ID = " + id);
+        } catch (Exception ex) {
+            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
+        }
     }
 
     /**
@@ -240,22 +246,13 @@ public class StudentController {
             )
     )
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
-        try {
-            // 1. 学生情報を保存
-            Student savedStudent = studentService.save(null, student); // IDをnullにしてDBで自動生成
+        // 学生情報の登録フロー
+        Student savedStudent = studentService.save(null, student); // IDをnullにしてDBで自動生成
+        studentCourseService.saveCourses(savedStudent, student.getStudentCourses());
 
-            // 2. 学生に紐づくコース情報を保存
-            studentCourseService.saveCourses(savedStudent, student.getStudentCourses());
-
-            // 3. 登録成功レスポンスを返却
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
-        } catch (Exception e) {
-            e.printStackTrace();
-            // エラー時レスポンスを返却
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
+        // 成功時のレスポンス
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
     }
 
     /**
@@ -475,15 +472,17 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentsResponse> getAllStudents() {
-        // 学生一覧取得
-        List<StudentDetail> students = studentDetailService.findAllStudentDetails();
+        try {
+            // 学生一覧取得
+            List<StudentDetail> students = studentDetailService.findAllStudentDetails();
 
-        // データが存在しない場合、StudentNotFoundExceptionをスロー
-        if (students.isEmpty()) {
-            throw new StudentNotFoundException("学生データが存在しません");
+
+            return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
+        } catch (StudentNotFoundException ex) {
+            throw new StudentNotFoundException("学生が見つかりませんでした。");
+        } catch (Exception ex) {
+            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
         }
-
-        return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
     }
 
     /**
@@ -560,10 +559,16 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
-        // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
-        studentService.deleteStudentById(id);
+        try {
+            // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
+            studentService.deleteStudentById(id);
 
-        // 正常終了時のレスポンス
-        return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
+            // 正常終了時のレスポンス
+            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
+        } catch (StudentNotFoundException ex) {
+            throw new StudentNotFoundException("指定された学生IDは見つかりません: ID = " + id);
+        } catch (Exception ex) {
+            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
+        }
     }
 }
