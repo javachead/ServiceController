@@ -7,6 +7,7 @@ import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 import raisetech.student.repository.StudentCourseRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -22,18 +23,51 @@ public class StudentCourseService {
         this.studentCourseRepository = studentCourseRepository;
     }
 
-    // 学生IDに基づくコース情報を取得
+    /**
+     * 特定の学生IDに関連付けられたコース情報のリストを取得します。
+     *
+     * @param studentId コース情報を取得する対象の学生の一意の識別子。
+     * @return 指定された学生IDに関連付けられたStudentCourseオブジェクトのリスト。
+     * @throws IllegalArgumentException 指定されたstudentIdがnullの場合にスローされます。
+     */
     public List<StudentCourse> findByStudentId(Long studentId) {
-        log.info("学生ID={} のコースを取得します。", studentId);
-        return studentCourseRepository.findByStudentId(studentId);
-    }
-
-    public void saveCourses(Student savedStudent, List<StudentCourse> courses) {
-        if (courses == null || courses.isEmpty()) {
-            log.warn("コースリストが空です。保存処理を終了します。");
-            return;
+        if (studentId == null) {
+            throw new IllegalArgumentException("学生IDが指定されていません");
         }
 
+        List<StudentCourse> studentCourses = studentCourseRepository.findByStudentId(studentId);
+
+        // 空リストの場合に例外をスロー
+        if (studentCourses.isEmpty()) {
+            throw new IllegalStateException("データが見つかりません: 学生ID=" + studentId);
+        }
+        return studentCourses;
+    }
+
+    /**
+     * 指定された学生に関連するコースのリストを保存します。このメソッドは、
+     * 提供されたコースが必要なフィールドを満たしているか検証し、
+     * 各コースに学生IDを割り当てます。
+     *
+     * @param savedStudent コースが保存される対象の学生オブジェクト。
+     * @param courses      保存するコースのリスト。
+     */
+    public void saveCourses(Student savedStudent, List<StudentCourse> courses) {
+        if (courses == null || courses.isEmpty()) {
+            throw new IllegalArgumentException("コースを入力してください。");
+        }
+        // courses をループで検査し、null のものがあれば例外をスローする
+        for (StudentCourse course : courses) {
+            if (course.getCourseStartAt() == null) {
+                throw new IllegalArgumentException("開始日が指定されていません");
+            }
+            if (course.getCourseStartAt().isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("開始日は未来の日付を指定してください");
+            }
+            if (course.getCourseName() == null || course.getCourseName().isBlank()) {
+                throw new IllegalArgumentException("コース名が空です");
+            }
+        }
         // 保存後の学生IDをコースに割り当て
         Long studentId = savedStudent.getId();
         courses.forEach(course -> course.setStudentId(studentId));
@@ -110,7 +144,6 @@ public class StudentCourseService {
                         });
             }
         });
-
         // 入力リストに存在しない既存データを削除
         List<Long> targetIds = courses.stream()
                 .map(StudentCourse::getId)

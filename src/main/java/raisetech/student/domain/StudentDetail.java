@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import raisetech.student.data.Student;
@@ -20,6 +21,7 @@ import java.util.List;
 @Schema(description = "受講生詳細情報 - 学生情報と登録されているコース情報のセット")
 @Setter
 @Getter
+@EqualsAndHashCode
 public class StudentDetail {
 
     @Valid
