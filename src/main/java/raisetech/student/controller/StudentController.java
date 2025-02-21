@@ -152,17 +152,9 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
-        try {
-            // IDをもとに学生情報を取得。見つからない場合は例外をスロー
-            Student student = studentService.getStudentById(id);
-
-            // 成功時のレスポンス
-            return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
-        } catch (StudentNotFoundException ex) {
-            throw new StudentNotFoundException("学生が見つかりません: ID = " + id);
-        } catch (Exception ex) {
-            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
-        }
+        // IDで学生情報を取得
+        Student student = studentService.getStudentById(id);
+        return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
     }
 
     /**
@@ -460,17 +452,8 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentsResponse> getAllStudents() {
-        try {
-            // 学生一覧取得
-            List<StudentDetail> students = studentDetailService.findAllStudentDetails();
-
-
-            return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
-        } catch (StudentNotFoundException ex) {
-            throw new StudentNotFoundException("学生が見つかりませんでした。");
-        } catch (Exception ex) {
-            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
-        }
+        List<StudentDetail> students = studentDetailService.findAllStudentDetails();
+        return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
     }
 
     /**
@@ -547,16 +530,7 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
-        try {
-            // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
-            studentService.deleteStudentById(id);
-
-            // 正常終了時のレスポンス
-            return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
-        } catch (StudentNotFoundException ex) {
-            throw new StudentNotFoundException("指定された学生IDは見つかりません: ID = " + id);
-        } catch (Exception ex) {
-            throw new RuntimeException("サーバー内部で予期しないエラーが発生しました。", ex);
-        }
+        studentService.deleteStudentById(id);
+        return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
     }
 }
