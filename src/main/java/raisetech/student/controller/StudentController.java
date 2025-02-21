@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
 import raisetech.student.dto.ErrorResponse;
 import raisetech.student.dto.StudentAddResponse;
@@ -335,24 +334,13 @@ public class StudentController {
     public ResponseEntity<StudentResponse> updateStudent(
             @PathVariable @Min(1) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
+        // studentServiceで更新ロジックを実行し、更新結果を取得
+        Student updatedStudent = studentService.save(id, studentDetail.getStudent());
 
-        // 学生データの更新処理
-        Student updatedStudent = studentDetail.getStudent();
-        updatedStudent.setId(id);
+        // 関連するコースを更新
+        studentCourseService.saveCourses(updatedStudent, studentDetail.getStudentCourses());
 
-        // 学生情報を保存または更新
-        if (studentService.getStudentById(id) == null) {
-            throw new StudentNotFoundException("指定された学生IDは存在しません: ID = " + id);
-        }
-
-        // 学生情報の更新
-        studentService.save(id, updatedStudent);
-
-        // コース情報を一括保存・更新
-        List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-        if (updatedCourses != null && !updatedCourses.isEmpty()) {
-            studentCourseService.courseList(updatedCourses, id);
-        }
+        // 成功レスポンスを返却
         return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
     }
 
