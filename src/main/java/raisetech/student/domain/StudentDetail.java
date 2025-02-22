@@ -55,7 +55,11 @@ public class StudentDetail {
      */
     public StudentDetail(Student student, List<StudentCourse> studentCourses) {
         this.student = student;  // 学生情報をセット
-        // コース情報はnullチェックを行い、nullであれば空リストで初期化
-        this.studentCourses = studentCourses != null ? new ArrayList<>(studentCourses) : new ArrayList<>();
+        // nullチェックを if-else を使って明示的に記述
+        if (studentCourses == null) {
+            this.studentCourses = new ArrayList<>();
+        } else {
+            this.studentCourses = new ArrayList<>(studentCourses);
+        }
     }
 }
