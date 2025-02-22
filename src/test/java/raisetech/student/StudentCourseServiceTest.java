@@ -16,8 +16,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
@@ -57,8 +58,8 @@ public class StudentCourseServiceTest {
         // サービスメソッド実行
         List<StudentCourse> result = sut.findByStudentId(101L);
 
-        // 結果の検証:内容が一致しているかを確認
-        assertEquals(expectedList, result);
+        // AssertJを用いて内容の一致を簡潔に検証
+        assertThat(result).containsExactlyElementsOf(expectedList);
     }
 
     /**
@@ -67,11 +68,9 @@ public class StudentCourseServiceTest {
     @Test
     public void 学生IDがnullで例外がスローされるテスト() {
         // 実行と検証を同時に行う
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            sut.findByStudentId(null);
-        });
-        // 検証: 例外メッセージの内容を確認する
-        assertEquals("学生IDが指定されていません", exception.getMessage());
+        assertThatThrownBy(() -> sut.findByStudentId(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("学生IDが指定されていません");
     }
 
     /**
@@ -86,13 +85,10 @@ public class StudentCourseServiceTest {
         Student mockStudent = new Student();
         mockStudent.setId(102L); // IDを設定
 
-        // テスト対象のメソッドを実行し、例外が発生することを期待
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            // saveCoursesの呼び出し（開始日がnullのコースを含むリストを渡す）
-            sut.saveCourses(mockStudent, Collections.singletonList(mockCourse));
-        });
-        // 例外メッセージを検証する
-        assertEquals("開始日が指定されていません", exception.getMessage());
+        // テスト対象のメソッドを実行し、例外を検証
+        assertThatThrownBy(() -> sut.saveCourses(mockStudent, Collections.singletonList(mockCourse)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("開始日が指定されていません");
     }
 
     /**
@@ -113,9 +109,11 @@ public class StudentCourseServiceTest {
         // サービスの呼び出し
         sut.removeUnusedCourses(newCourses, existingCourses);
 
-        // 検証
-        verify(studentCourseRepository).deleteCourse(2L);
-        verifyNoMoreInteractions(studentCourseRepository);
+        // モック呼び出し検証
+        assertThatCode(() -> {
+            verify(studentCourseRepository).deleteCourse(2L);
+            verifyNoMoreInteractions(studentCourseRepository);
+        }).doesNotThrowAnyException();
     }
 
     /**
@@ -138,13 +136,16 @@ public class StudentCourseServiceTest {
         sut.courseList(newCourses, 101L);
 
         // 検証：更新されたかを確認
-        verify(studentCourseRepository, times(1)).updateCourse(any(StudentCourse.class));
+        assertThatCode(() -> verify(studentCourseRepository, times(1)).updateCourse(any(StudentCourse.class)))
+                .doesNotThrowAnyException();
 
-        // 削除が実行されなかったことを確認
-        verify(studentCourseRepository, never()).deleteCourse(anyLong());
+        // 検証：削除が実行されなかったこと
+        assertThatCode(() -> verify(studentCourseRepository, never()).deleteCourse(anyLong()))
+                .doesNotThrowAnyException();
 
-        // 新規挿入が実行されなかったことを確認
-        verify(studentCourseRepository, never()).insertCourse(any(StudentCourse.class));
+        // 検証：新規挿入が実行されなかったこと
+        assertThatCode(() -> verify(studentCourseRepository, never()).insertCourse(any(StudentCourse.class)))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -163,10 +164,13 @@ public class StudentCourseServiceTest {
         // サービス実行：新しいリストを空に
         sut.removeUnusedCourses(new ArrayList<>(), existingCourses);
 
-        // 検証
-        verify(studentCourseRepository).deleteCourse(1L);
-        verify(studentCourseRepository).deleteCourse(2L);
+        // 検証：削除が呼び出されたか
+        assertThatCode(() -> {
+            verify(studentCourseRepository).deleteCourse(1L);
+            verify(studentCourseRepository).deleteCourse(2L);
+        }).doesNotThrowAnyException();
     }
+
 
     /**
      * 既存のリストが空の場合に、処理が正常に終了することを確認するテスト。
@@ -179,8 +183,9 @@ public class StudentCourseServiceTest {
         // サービス実行
         sut.removeUnusedCourses(new ArrayList<>(), emptyCourses);
 
-        // 検証
-        verifyNoMoreInteractions(studentCourseRepository);
+        // 検証：モックにそれ以上の呼び出しがないことを確認
+        assertThatCode(() -> verifyNoMoreInteractions(studentCourseRepository))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -199,7 +204,8 @@ public class StudentCourseServiceTest {
         sut.courseList(newCourses, 101L);
 
         // 検証
-        verify(studentCourseRepository).insertCourse(any(StudentCourse.class));
+        assertThatCode(() -> verify(studentCourseRepository).insertCourse(any(StudentCourse.class)))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -215,9 +221,8 @@ public class StudentCourseServiceTest {
         when(studentCourseRepository.findByStudentId(101L)).thenReturn(existingCourses);
 
         // 実行＆検証
-        assertThrows(IllegalArgumentException.class, () ->
-                sut.courseList(newCourses, 101L)
-        );
+        assertThatThrownBy(() -> sut.courseList(newCourses, 101L))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -244,7 +249,8 @@ public class StudentCourseServiceTest {
         sut.courseList(newCourses, 101L);
 
         // 検証: 新規登録 (insertCourse) が1回実行されたことを確認
-        verify(studentCourseRepository, times(1)).insertCourse(any(StudentCourse.class));
+        assertThatCode(() -> verify(studentCourseRepository, times(1)).insertCourse(any(StudentCourse.class)))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -263,7 +269,8 @@ public class StudentCourseServiceTest {
         sut.removeUnusedCourses(new ArrayList<>(), existingCourses);
 
         // 削除検証
-        verify(studentCourseRepository).deleteCourse(1L);
+        assertThatCode(() -> verify(studentCourseRepository).deleteCourse(1L))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -284,7 +291,7 @@ public class StudentCourseServiceTest {
         List<StudentCourse> result = sut.findByStudentId(101L);
 
         // 検証: データが正しく渡されること
-        assertEquals(10000, result.size());
+        assertThat(result).hasSize(10000);
     }
 
     /**
@@ -301,10 +308,12 @@ public class StudentCourseServiceTest {
         doThrow(RuntimeException.class).when(studentCourseRepository).insertCourse(any(StudentCourse.class));
 
         // 実行と例外確認
-        assertThrows(RuntimeException.class, () -> sut.courseList(newCourses, 101L));
+        assertThatThrownBy(() -> sut.courseList(newCourses, 101L))
+                .isInstanceOf(RuntimeException.class);
 
         // 確認: 削除や挿入が呼び出されない
-        verify(studentCourseRepository, never()).deleteCourse(anyLong());
+        assertThatCode(() -> verify(studentCourseRepository, never()).deleteCourse(anyLong()))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -325,8 +334,12 @@ public class StudentCourseServiceTest {
         sut.removeUnusedCourses(newCourses, existingCourses);
 
         // 確認: 削除操作が1回だけ呼び出されたことを確認
-        verify(studentCourseRepository, times(1)).deleteCourse(2L);
-        verifyNoMoreInteractions(studentCourseRepository);
+        assertThatCode(() -> verify(studentCourseRepository, times(1)).deleteCourse(2L))
+                .doesNotThrowAnyException();
+
+        // 確認: それ以上の呼び出しがない
+        assertThatCode(() -> verifyNoMoreInteractions(studentCourseRepository))
+                .doesNotThrowAnyException();
     }
 
     /*
@@ -348,15 +361,13 @@ public class StudentCourseServiceTest {
                 .thenReturn(List.of()); // 空リスト返却をシミュレーション
 
         // アクション: 存在しないIDで更新処理を実行
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> sut.courseList(courses, 1L) // 存在する学生ID
-        );
-        // 検証
-        assertEquals("該当するコースIDが見つかりません: ID=999", exception.getMessage());
+        assertThatThrownBy(() -> sut.courseList(courses, 1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("該当するコースIDが見つかりません: ID=999");
 
         // Repository モックが適切に呼び出されたか検証（オプション）
-        verify(studentCourseRepository, times(1)).findByStudentId(1L);
+        assertThatCode(() -> verify(studentCourseRepository, times(1)).findByStudentId(1L))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -383,11 +394,13 @@ public class StudentCourseServiceTest {
 
         // サービス実行1: 削除対象が存在する
         sut.removeUnusedCourses(newCourses1, existingCourses);
-        verify(studentCourseRepository, times(1)).deleteCourse(2L);
+        assertThatCode(() -> verify(studentCourseRepository, times(1)).deleteCourse(2L))
+                .doesNotThrowAnyException();
 
         // サービス実行2: リストが空の場合
         sut.removeUnusedCourses(newCourses2, emptyCourses);
-        verifyNoMoreInteractions(studentCourseRepository);
+        assertThatCode(() -> verifyNoMoreInteractions(studentCourseRepository))
+                .doesNotThrowAnyException();
     }
 
     /**
@@ -405,6 +418,7 @@ public class StudentCourseServiceTest {
         sut.removeUnusedCourses(newCourses, existingCourses);
 
         // 検証：リポジトリの削除操作が呼ばれていない
-        verifyNoMoreInteractions(studentCourseRepository);
+        assertThatCode(() -> verifyNoMoreInteractions(studentCourseRepository))
+                .doesNotThrowAnyException();
     }
 }

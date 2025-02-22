@@ -1,6 +1,5 @@
 package raisetech.student;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,8 +13,8 @@ import raisetech.student.service.StudentService;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doNothing;
@@ -59,11 +58,11 @@ public class StudentServiceTest {
         Mockito.when(studentRepository.findById(1L)).thenReturn(Optional.of(student)); // モックの振る舞いを定義
 
         // テスト実行
-        Student result = sut.getStudentById(1L); // sut(StudentService)を使用
+        Student result = sut.getStudentById(1L);
 
         // 検証
-        Assertions.assertEquals("taro@example.com", result.getEmail()); // 期待値と一致
-        Assertions.assertEquals("山田太郎", result.getName());
+        assertThat(result.getEmail()).isEqualTo("taro@example.com");
+        assertThat(result.getName()).isEqualTo("山田太郎");
     }
 
     @Test
@@ -73,8 +72,10 @@ public class StudentServiceTest {
         when(studentRepository.findById(id)).thenReturn(Optional.empty());
 
         // メソッド実行時に例外が発生することを確認
-        assertThrows(StudentNotFoundException.class, () -> sut.getStudentById(id));
-        // 検証：findByIdが1回呼び出されているか確認
+        assertThatThrownBy(() -> sut.getStudentById(id))
+                .isInstanceOf(StudentNotFoundException.class)
+                .hasMessageContaining("学生が見つかりません");
+        // 検証
         verify(studentRepository, times(1)).findById(id);
     }
 
@@ -113,7 +114,9 @@ public class StudentServiceTest {
         when(studentRepository.findById(id)).thenReturn(Optional.empty());
 
         // メソッド実行時に例外が発生することを確認
-        assertThrows(StudentNotFoundException.class, () -> sut.deleteStudentById(id));
+        assertThatThrownBy(() -> sut.deleteStudentById(id))
+                .isInstanceOf(StudentNotFoundException.class)
+                .hasMessageContaining("学生が見つかりません");
         // 検証：findByIdは1回呼ばれ、deleteByIdは一度も呼ばれないことを確認
         verify(studentRepository, times(1)).findById(id);
         verify(studentRepository, never()).deleteById(anyLong());
@@ -150,8 +153,8 @@ public class StudentServiceTest {
         // 検証：saveが1回呼び出されているか確認
         verify(studentRepository, times(1)).save(student);
         // IDが自動セットされているか確認
-        assertEquals(1L, result.getId());
-        assertEquals("山田太郎", result.getName());
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getName()).isEqualTo("山田太郎");
     }
 
     @Test
@@ -188,20 +191,20 @@ public class StudentServiceTest {
         );
 
         // モックリポジトリの設定: 既存の学生情報を返す
-        Mockito.when(studentRepository.findById(id)).thenReturn(Optional.of(existingStudent));
+        when(studentRepository.findById(id)).thenReturn(Optional.of(existingStudent));
 
         // モックリポジトリの設定: 更新を模倣
-        Mockito.when(studentRepository.save(Mockito.any(Student.class))).thenReturn(updatedStudent);
+        when(studentRepository.save(any(Student.class))).thenReturn(updatedStudent);
 
         // テスト実行
-        Student result = sut.save(id, updatedStudent); // サービスの更新メソッドを呼び出し
+        Student result = sut.save(id, updatedStudent);
 
         // 更新処理後の検証
-        Assertions.assertEquals("更新太郎", result.getName()); // 名前が更新されたか確認
-        Assertions.assertEquals("koushin123@example.com", result.getEmail()); // Emailが更新されたか確認
-        Assertions.assertEquals("大阪府", result.getArea()); // Areaが更新されたか確認
-        Assertions.assertEquals(21, result.getAge()); // Ageが数値型で更新されたか確認
-        Assertions.assertEquals("更新された備考", result.getRemark()); // 備考が更新されたか確認
+        assertThat(result.getName()).isEqualTo("更新太郎");
+        assertThat(result.getEmail()).isEqualTo("koushin123@example.com");
+        assertThat(result.getArea()).isEqualTo("大阪府");
+        assertThat(result.getAge()).isEqualTo(21);
+        assertThat(result.getRemark()).isEqualTo("更新された備考");
     }
 
     @Test
@@ -226,7 +229,9 @@ public class StudentServiceTest {
         when(studentRepository.findById(id)).thenReturn(Optional.empty());
 
         // メソッド実行時に例外が発生することを確認
-        assertThrows(StudentNotFoundException.class, () -> sut.save(id, student));
+        assertThatThrownBy(() -> sut.save(id, student))
+                .isInstanceOf(StudentNotFoundException.class)
+                .hasMessageContaining("学生が見つかりません");
         // 検証：findByIdが1回呼び出され、saveが呼び出されていないことを確認
         verify(studentRepository, times(1)).findById(id);
         verify(studentRepository, never()).save(any(Student.class));
