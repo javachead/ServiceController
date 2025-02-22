@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import raisetech.student.data.Student;
-import raisetech.student.data.StudentCourse;
 import raisetech.student.domain.StudentDetail;
 import raisetech.student.dto.ErrorResponse;
 import raisetech.student.dto.StudentAddResponse;
@@ -60,6 +59,21 @@ public class StudentController {
 
     // 学生情報に関するサービスクラス
     private final StudentService studentService;
+
+    /**
+     * コンストラクターインジェクションを通じてサービスを注入。
+     *
+     * @param studentCourseService 学生コース管理サービス
+     * @param studentDetailService 学生詳細情報管理サービス
+     * @param studentService       学生管理サービス
+     */
+    public StudentController(StudentCourseService studentCourseService,
+                             StudentDetailService studentDetailService,
+                             StudentService studentService) {
+        this.studentCourseService = studentCourseService;
+        this.studentDetailService = studentDetailService;
+        this.studentService = studentService;
+    }
 
     /**
      * 指定されたIDの学生情報を取得するエンドポイント。
@@ -138,27 +152,9 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentResponse> getStudent(@PathVariable @Min(1) Long id) {
-        // IDをもとに学生情報を取得。見つからない場合は例外をスロー
+        // IDで学生情報を取得
         Student student = studentService.getStudentById(id);
-
-        // 成功時のレスポンス
         return ResponseEntity.ok(new StudentResponse("指定されたIDの学生を取得しました", student.getId()));
-    }
-
-    /**
-     * コンストラクターインジェクションを通じてサービスを注入。
-     *
-     * @param studentCourseService 学生コース管理サービス
-     * @param studentDetailService 学生詳細情報管理サービス
-     * @param studentService       学生管理サービス
-     */
-
-    public StudentController(StudentCourseService studentCourseService,
-                             StudentDetailService studentDetailService,
-                             StudentService studentService) {
-        this.studentCourseService = studentCourseService;
-        this.studentDetailService = studentDetailService;
-        this.studentService = studentService;
     }
 
     /**
@@ -175,7 +171,6 @@ public class StudentController {
      * @return 保存に成功した場合、作成された学生情報を含むレスポンス（201 Created）。
      * 失敗した場合、エラーメッセージを含むレスポンス（500 Internal Server Error）。
      */
-
     @Transactional
     @PostMapping
     @Operation(
@@ -241,20 +236,12 @@ public class StudentController {
                     )
             )
     )
-
     public ResponseEntity<StudentAddResponse> createStudent(@RequestBody @Valid Student student) {
-        // 1. 学生情報を保存
-        Student savedStudent = studentService.save(student);
+        // 学生情報の登録フロー
+        Student savedStudent = studentService.save(null, student); // IDをnullにしてDBで自動生成
+        studentCourseService.saveCourses(savedStudent, student.getStudentCourses());
 
-        // 2. 学生に紐づくコース情報を保存
-        List<StudentCourse> courseList = student.getStudentCourses();
-        if (courseList != null && !courseList.isEmpty()) {
-            Long studentId = savedStudent.getId(); // 保存後に学生IDを取得
-            courseList.forEach(course -> course.setStudentId(studentId)); // 各コースに学生IDを設定
-            studentCourseService.courseList(courseList, studentId);
-        }
-
-        // 3. 登録成功レスポンスを返却
+        // 成功時のレスポンス
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new StudentAddResponse("学生情報および関連コースが正常に保存されました", savedStudent));
     }
@@ -339,25 +326,13 @@ public class StudentController {
     public ResponseEntity<StudentResponse> updateStudent(
             @PathVariable @Min(1) Long id,
             @RequestBody @Valid StudentDetail studentDetail) {
+        // studentServiceで更新ロジックを実行し、更新結果を取得
+        Student updatedStudent = studentService.save(id, studentDetail.getStudent());
 
-        // 学生データの更新処理
-        Student updatedStudent = studentDetail.getStudent();
-        updatedStudent.setId(id);
+        // 関連するコースを更新
+        studentCourseService.saveCourses(updatedStudent, studentDetail.getStudentCourses());
 
-        // 学生情報を保存または更新
-        if (studentService.getStudentById(id) == null) {
-            throw new StudentNotFoundException("指定された学生IDは存在しません: ID = " + id);
-        }
-
-        // 学生情報の更新
-        studentService.save(updatedStudent);
-
-        // コース情報を一括保存・更新
-        List<StudentCourse> updatedCourses = studentDetail.getStudentCourses();
-        if (updatedCourses != null && !updatedCourses.isEmpty()) {
-            studentCourseService.courseList(updatedCourses, id);
-        }
-
+        // 成功レスポンスを返却
         return ResponseEntity.ok(new StudentResponse("学生データが正常に更新されました", updatedStudent.getId()));
     }
 
@@ -477,14 +452,7 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentsResponse> getAllStudents() {
-        // 学生一覧取得
         List<StudentDetail> students = studentDetailService.findAllStudentDetails();
-
-        // データが存在しない場合、StudentNotFoundExceptionをスロー
-        if (students.isEmpty()) {
-            throw new StudentNotFoundException("学生データが存在しません");
-        }
-
         return ResponseEntity.ok(new StudentsResponse("学生一覧を取得しました", students));
     }
 
@@ -562,10 +530,7 @@ public class StudentController {
             )
     })
     public ResponseEntity<StudentDeleteResponse> removeStudent(@PathVariable @Min(1) Long id) {
-        // 学生情報を削除（存在しない場合は StudentNotFoundException をスロー）
         studentService.deleteStudentById(id);
-
-        // 正常終了時のレスポンス
         return ResponseEntity.ok(new StudentDeleteResponse("学生が削除されました"));
     }
 }

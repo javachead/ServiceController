@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 
@@ -20,6 +22,9 @@ import java.util.List;
 @Schema(description = "受講生詳細情報 - 学生情報と登録されているコース情報のセット")
 @Setter
 @Getter
+@EqualsAndHashCode
+@ToString
+
 public class StudentDetail {
 
     @Valid
@@ -40,5 +45,21 @@ public class StudentDetail {
      */
     public StudentDetail() {
         this.studentCourses = new ArrayList<>();
+    }
+
+    /**
+     * 学生情報とコース情報を設定するコンストラクタ。
+     *
+     * @param student        学生情報
+     * @param studentCourses 学生が登録しているコース情報のリスト
+     */
+    public StudentDetail(Student student, List<StudentCourse> studentCourses) {
+        this.student = student;  // 学生情報をセット
+        // nullチェックを if-else を使って明示的に記述
+        if (studentCourses == null) {
+            this.studentCourses = new ArrayList<>();
+        } else {
+            this.studentCourses = new ArrayList<>(studentCourses);
+        }
     }
 }

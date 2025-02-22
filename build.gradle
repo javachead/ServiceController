@@ -73,3 +73,11 @@ tasks.withType(JavaCompile).configureEach {
     // JVMオプションを追加
     options.forkOptions.jvmArgs << '-Djdk.attach.allowAttachSelf=true' // JVMに自己アタッチを許可する設定
 }
+
+tasks.withType(Test).configureEach {
+    jvmArgs '-XX:+EnableDynamicAgentLoading'
+}
+
+tasks.test {
+    useJUnitPlatform() // JUnit 5を使用
+}
