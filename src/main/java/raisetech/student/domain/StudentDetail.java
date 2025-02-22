@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import raisetech.student.data.Student;
 import raisetech.student.data.StudentCourse;
 
@@ -22,6 +23,8 @@ import java.util.List;
 @Setter
 @Getter
 @EqualsAndHashCode
+@ToString
+
 public class StudentDetail {
 
     @Valid
@@ -42,5 +45,17 @@ public class StudentDetail {
      */
     public StudentDetail() {
         this.studentCourses = new ArrayList<>();
+    }
+
+    /**
+     * 学生情報とコース情報を設定するコンストラクタ。
+     *
+     * @param student        学生情報
+     * @param studentCourses 学生が登録しているコース情報のリスト
+     */
+    public StudentDetail(Student student, List<StudentCourse> studentCourses) {
+        this.student = student;  // 学生情報をセット
+        // コース情報はnullチェックを行い、nullであれば空リストで初期化
+        this.studentCourses = studentCourses != null ? new ArrayList<>(studentCourses) : new ArrayList<>();
     }
 }

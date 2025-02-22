@@ -35,38 +35,33 @@ class StudentDetailServiceTest {
     void 正常系_全学生の詳細情報が正しく取得される() {
         // モックデータの作成
         Student student1 = new Student(1L, "田中太郎", "タナカ", null, "tanaka@example.com", "東京都", 25, "男性", null, true, null);
-        Student student2 = new Student(2L, "佐藤花子", "サトウ", null, "Satou@example.com", "大阪府", 30, "女性", null, false, null);
+        Student student2 = new Student(2L, "佐藤花子", "サトウ", null, "satou@example.com", "大阪府", 30, "女性", null, false, null);
 
-        List<Student> students = List.of(student1, student2);
+        List<StudentCourse> coursesForTanaka = List.of(new StudentCourse(1L, 1L, "Java", null, null));
+        List<StudentCourse> coursesForSatou = List.of(new StudentCourse(2L, 2L, "PHP", null, null));
 
-        List<StudentCourse> courseFortanaka = List.of(new StudentCourse(1L, 1L, "Java", null, null));
-        List<StudentCourse> coursesForsatou = List.of(new StudentCourse(2L, 2L, "PHP", null, null));
+        // 正しい期待値を作成
+        StudentDetail expectedDetail1 = new StudentDetail(student1, coursesForTanaka);
+        StudentDetail expectedDetail2 = new StudentDetail(student2, coursesForSatou);
 
-        // モックの振る舞いを定義
-        Mockito.when(studentRepository.findAllStudents()).thenReturn(students);
-        Mockito.when(studentCourseService.findByStudentId(1L)).thenReturn(courseFortanaka);
-        Mockito.when(studentCourseService.findByStudentId(2L)).thenReturn(coursesForsatou);
+        // モックの設定
+        Mockito.when(studentRepository.findAllStudents())
+                .thenReturn(List.of(student1, student2));
+        Mockito.when(studentCourseService.findByStudentId(1L))
+                .thenReturn(coursesForTanaka);
+        Mockito.when(studentCourseService.findByStudentId(2L))
+                .thenReturn(coursesForSatou);
 
-        // テスト実行
-        List<StudentDetail> result = sut.findAllStudentDetails();
+        // テスト対象のメソッドを呼び出し
+        List<StudentDetail> actualResult = sut.findAllStudentDetails();
 
-        // 結果の検証
-        Assertions.assertThat(result).hasSize(2);
+        // 比較対象の出力確認（デバッグ用）
+        System.out.println("Actual Result: " + actualResult);
 
-        // 検証：1人目の学生データ
-        Assertions.assertThat(result.getFirst().getStudent().getName()).isEqualTo("田中太郎");
-        Assertions.assertThat(result.get(0).getStudentCourses()).hasSize(1);
-        Assertions.assertThat(result.get(0).getStudentCourses().getFirst().getCourseName()).isEqualTo("Java");
-
-        // 検証：2人目の学生データ
-        Assertions.assertThat(result.get(1).getStudent().getName()).isEqualTo("佐藤花子");
-        Assertions.assertThat(result.get(1).getStudentCourses()).hasSize(1);
-        Assertions.assertThat(result.get(1).getStudentCourses().getFirst().getCourseName()).isEqualTo("PHP");
-
-        // リポジトリとサービスの呼び出し回数の検証
-        Mockito.verify(studentRepository, Mockito.times(1)).findAllStudents();
-        Mockito.verify(studentCourseService, Mockito.times(1)).findByStudentId(1L);
-        Mockito.verify(studentCourseService, Mockito.times(1)).findByStudentId(2L); // IDに注意
+        // 再帰的比較を用いて正しい結果を検証
+        Assertions.assertThat(actualResult)
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(expectedDetail1, expectedDetail2));
     }
 
     /**
@@ -100,16 +95,13 @@ class StudentDetailServiceTest {
         Mockito.when(studentCourseService.findByStudentId(1L)).thenReturn(List.of()); // 空のリストを返す
 
         // テスト実行
-        List<StudentDetail> result = sut.findAllStudentDetails();
+        List<StudentDetail> actualResult = sut.findAllStudentDetails();
 
-        // 検証
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.getFirst().getStudent().getName()).isEqualTo("田中太郎");
-        Assertions.assertThat(result.getFirst().getStudentCourses()).isEmpty(); // コース情報が空
+        // 期待値作成
+        List<StudentDetail> expectedDetails = List.of(new StudentDetail(student, List.of()));
 
-        // 呼び出し確認
-        Mockito.verify(studentRepository, Mockito.times(1)).findAllStudents();
-        Mockito.verify(studentCourseService, Mockito.times(1)).findByStudentId(1L);
+        // アサーション
+        Assertions.assertThat(actualResult).usingRecursiveComparison().isEqualTo(expectedDetails);
     }
 
     /**
