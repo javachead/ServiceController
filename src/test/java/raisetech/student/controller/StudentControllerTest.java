@@ -88,7 +88,6 @@ public class StudentControllerTest {
         List<StudentCourse> courses = List.of(
                 new StudentCourse(null, null, "Java", LocalDate.of(2023, 4, 1), LocalDate.of(2023, 7, 15))
         );
-
         student.setStudentCourses(courses);
 
         // Mockの挙動を設定
@@ -98,7 +97,6 @@ public class StudentControllerTest {
             capturedStudent.getStudentCourses().forEach(course -> course.setStudentId(1L));
             return capturedStudent;
         });
-
         // POSTリクエストと期待する結果の確認
         mockMvc.perform(post("/api/students")
                         .contentType(MediaType.APPLICATION_JSON)
