@@ -209,4 +209,48 @@ public class StudentControllerTest {
                 .andExpect(status().isNotFound()) // ステータス404
                 .andExpect(jsonPath("$.message").value("学生データが見つかりませんでした。"));
     }
+
+    @Test
+    void 異常系_新規登録時に不正なデータが送信された場合にバリデーションエラーが発生する() throws Exception {
+        Student student = new Student();
+        student.setName(""); // 空文字（必須フィールド）
+        student.setEmail("不正なメール形式"); // 不正なメール形式
+
+        StudentDetail studentDetail = new StudentDetail();
+        studentDetail.setStudent(student);
+
+        mockMvc.perform(post("/api/students")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(studentDetail)))
+                .andExpect(status().isBadRequest()) // ステータス400
+                // 個別エラー項目を確認
+                .andExpect(jsonPath("$.name").value("名前は必須です"))
+                .andExpect(jsonPath("$.email").value("メールアドレスの形式が正しくありません"))
+                .andExpect(jsonPath("$.area").value("住所（エリア）は必須です"))
+                .andExpect(jsonPath("$.deleted").value("isDeletedフラグは必須です"));
+    }
+
+    @Test
+    public void 異常系_予期しないエラーが発生した場合に500エラーが返る() throws Exception {
+        // モックで意図的に RuntimeException を発生させる
+        doThrow(new RuntimeException("意図的な例外です"))
+                .when(studentService).save(any(), any(Student.class));
+
+        String jsonRequest = """
+                             {
+                               "name": "例外太郎",
+                               "kanaName": "レイガイタロウ",
+                               "email": "reigai@example.com",
+                               "area": "東京都",
+                               "deleted": false,
+                               "studentCourses": []
+                             }
+                             """;
+
+        mockMvc.perform(post("/api/students")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andExpect(status().isInternalServerError()) // 500エラーを期待
+                .andExpect(jsonPath("$.message").value("エラーが発生しました")); // グローバル例外のレスポンス内容を確認
+    }
 }
