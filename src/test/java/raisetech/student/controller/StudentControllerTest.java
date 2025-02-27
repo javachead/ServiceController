@@ -63,7 +63,7 @@ public class StudentControllerTest {
 
 
     @Test
-    public void 正常系_全学生情報を取得する() throws Exception {
+    public void 正常系_全学生情報を取得し200を返却する() throws Exception {
         List<StudentDetail> mockStudents = Collections.singletonList(new StudentDetail());
         when(studentDetailService.findAllStudentDetails()).thenReturn(mockStudents);
 
@@ -76,7 +76,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 正常系_新規学生情報およびコース情報を登録する() throws Exception {
+    public void 正常系_新規学生情報およびコース情報を登録し201を返却する() throws Exception {
         // ObjectMapperにJSR310モジュールを登録
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -112,7 +112,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 正常系_学生情報をID指定で取得するテスト() throws Exception {
+    public void 正常系_学生情報をID指定で取得し200を返却するテスト() throws Exception {
         Long studentId = 1L;
 
         // モックオブジェクトの準備
@@ -152,7 +152,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 正常系_学生削除リクエストが正常に処理されるテスト() throws Exception {
+    public void 正常系_学生削除リクエストが正常に処理され200を返却するテスト() throws Exception {
         Long studentId = 1L;
 
         // ----- 1. 正常系 (Happy Path) -----
@@ -172,7 +172,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    void 正常系_学生情報更新が正常に完了し正しいレスポンスが返ることを検証するテスト() throws Exception {
+    void 正常系_学生情報更新が正常に完了し200を返却することを検証するテスト() throws Exception {
         Long studentId = 1L;
 
         // 必須データを設定
@@ -199,7 +199,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    void 異常系_存在しない学生IDを指定した場合にStudentNotFoundExceptionをスローする() throws Exception {
+    void 異常系_存在しない学生IDを指定した場合にStudentNotFoundExceptionとして404を返却する() throws Exception {
         Long invalidStudentId = 99999L; // バリデーションを満たす無効なID
         when(studentService.getStudentById(eq(invalidStudentId)))
                 .thenThrow(new StudentNotFoundException("学生が存在しません: ID = " + invalidStudentId));
@@ -211,7 +211,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    void 異常系_新規登録時に不正なデータが送信された場合にバリデーションエラーが発生する() throws Exception {
+    void 異常系_新規登録時に不正なデータが送信された場合にバリデーションエラーで400を返却する() throws Exception {
         Student student = new Student();
         student.setName(""); // 空文字（必須フィールド）
         student.setEmail("不正なメール形式"); // 不正なメール形式
@@ -231,7 +231,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 異常系_予期しないエラーが発生した場合に500エラーが返る() throws Exception {
+    public void 異常系_予期しないエラーが発生した場合に500を返却する() throws Exception {
         // モックで意図的に RuntimeException を発生させる
         doThrow(new RuntimeException("意図的な例外です"))
                 .when(studentService).save(any(), any(Student.class));
