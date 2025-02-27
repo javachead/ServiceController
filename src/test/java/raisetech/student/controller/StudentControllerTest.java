@@ -63,7 +63,7 @@ public class StudentControllerTest {
 
 
     @Test
-    public void 全学生情報を取得する() throws Exception {
+    public void 正常系_全学生情報を取得する() throws Exception {
         List<StudentDetail> mockStudents = Collections.singletonList(new StudentDetail());
         when(studentDetailService.findAllStudentDetails()).thenReturn(mockStudents);
 
@@ -76,7 +76,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 新規学生情報およびコース情報を登録する() throws Exception {
+    public void 正常系_新規学生情報およびコース情報を登録する() throws Exception {
         // ObjectMapperにJSR310モジュールを登録
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -112,7 +112,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 学生情報をID指定で取得するテスト() throws Exception {
+    public void 正常系_学生情報をID指定で取得するテスト() throws Exception {
         Long studentId = 1L;
 
         // モックオブジェクトの準備
@@ -152,7 +152,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void 学生削除リクエストが正常に処理されるテスト() throws Exception {
+    public void 正常系_学生削除リクエストが正常に処理されるテスト() throws Exception {
         Long studentId = 1L;
 
         // ----- 1. 正常系 (Happy Path) -----
@@ -172,7 +172,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    void 学生情報更新テスト() throws Exception {
+    void 正常系_学生情報更新が正常に完了し正しいレスポンスが返ることを検証するテスト() throws Exception {
         Long studentId = 1L;
 
         // 必須データを設定
@@ -199,7 +199,7 @@ public class StudentControllerTest {
     }
 
     @Test
-    void 存在しない学生IDを指定した場合にStudentNotFoundExceptionをスローする() throws Exception {
+    void 異常系_存在しない学生IDを指定した場合にStudentNotFoundExceptionをスローする() throws Exception {
         Long invalidStudentId = 99999L; // バリデーションを満たす無効なID
         when(studentService.getStudentById(eq(invalidStudentId)))
                 .thenThrow(new StudentNotFoundException("学生が存在しません: ID = " + invalidStudentId));
