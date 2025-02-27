@@ -53,11 +53,10 @@ public class StudentControllerTest {
     @MockBean
     private StudentDetailService studentDetailService;
 
-
-    private StudentCourse studentCourse;
-
     @MockBean
     private StudentCourseService studentCourseService;
+
+    private StudentCourse studentCourse;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -154,20 +153,14 @@ public class StudentControllerTest {
     public void 正常系_学生削除リクエストが正常に処理され200を返却するテスト() throws Exception {
         Long studentId = 1L;
 
-        // ----- 1. 正常系 (Happy Path) -----
         doNothing().when(studentService).deleteStudentById(studentId);
 
         mockMvc.perform(delete("/api/students/{id}", studentId))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk()) // ステータス200を検証
+                .andExpect(jsonPath("$.message").value("学生が削除されました")); // メッセージを検証
+
+        // サービス層のメソッドが1回だけ呼ばれたことを検証
         verify(studentService, times(1)).deleteStudentById(studentId);
-
-        // ----- 2. 異常系 (例外処理) -----
-        doThrow(new StudentNotFoundException("学生が存在しません: ID = " + studentId))
-                .when(studentService).deleteStudentById(studentId);
-
-        mockMvc.perform(delete("/api/students/1"))
-                .andExpect(status().isNotFound()) // HTTPステータス404が期待される
-                .andExpect(jsonPath("$.message").value("学生データが見つかりませんでした。"));
     }
 
     @Test
@@ -227,6 +220,18 @@ public class StudentControllerTest {
                 .andExpect(jsonPath("$.email").value("メールアドレスの形式が正しくありません"))
                 .andExpect(jsonPath("$.area").value("住所（エリア）は必須です"))
                 .andExpect(jsonPath("$.deleted").value("isDeletedフラグは必須です"));
+    }
+
+    @Test
+    public void 異常系_存在しない学生を削除しようとした場合404を返却する() throws Exception {
+        Long invalidStudentId = 99999L;
+        // モックの設定: 存在しないIDを指定したときに例外をスローする
+        doThrow(new StudentNotFoundException("学生が存在しません: ID = " + invalidStudentId))
+                .when(studentService).deleteStudentById(invalidStudentId);
+
+        mockMvc.perform(delete("/api/students/{id}", invalidStudentId))
+                .andExpect(status().isNotFound()) // HTTPステータス404が期待される
+                .andExpect(jsonPath("$.message").value("学生データが見つかりませんでした。")); // エラーメッセージを直接検証
     }
 
     @Test
