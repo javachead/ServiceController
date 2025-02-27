@@ -53,7 +53,7 @@ public class StudentControllerTest {
     @MockBean
     private StudentDetailService studentDetailService;
 
-    @MockBean
+
     private StudentCourse studentCourse;
 
     @MockBean
