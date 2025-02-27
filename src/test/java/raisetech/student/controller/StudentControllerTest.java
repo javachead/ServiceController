@@ -78,7 +78,6 @@ public class StudentControllerTest {
     @Test
     public void 正常系_新規学生情報およびコース情報を登録し201を返却する() throws Exception {
         // ObjectMapperにJSR310モジュールを登録
-        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
         // テスト対象のStudentオブジェクト
