@@ -41,8 +41,13 @@ class StudentDetailServiceTest {
         List<StudentCourse> coursesForSatou = List.of(new StudentCourse(2L, 2L, "PHP", null, null));
 
         // 正しい期待値を作成
-        StudentDetail expectedDetail1 = new StudentDetail(student1, coursesForTanaka);
-        StudentDetail expectedDetail2 = new StudentDetail(student2, coursesForSatou);
+        StudentDetail expectedDetail1 = new StudentDetail();
+        expectedDetail1.setStudent(student1);
+        expectedDetail1.setStudentCourses(coursesForTanaka);
+
+        StudentDetail expectedDetail2 = new StudentDetail();
+        expectedDetail2.setStudent(student2);
+        expectedDetail2.setStudentCourses(coursesForSatou);
 
         // モックの設定
         Mockito.when(studentRepository.findAllStudents())
@@ -98,7 +103,11 @@ class StudentDetailServiceTest {
         List<StudentDetail> actualResult = sut.findAllStudentDetails();
 
         // 期待値作成
-        List<StudentDetail> expectedDetails = List.of(new StudentDetail(student, List.of()));
+        StudentDetail expectedDetail = new StudentDetail();   // 新しい StudentDetail インスタンス
+        expectedDetail.setStudent(student);                   // student をセット
+        expectedDetail.setStudentCourses(List.of());          // 空リストをセット
+
+        List<StudentDetail> expectedDetails = List.of(expectedDetail);
 
         // アサーション
         Assertions.assertThat(actualResult).usingRecursiveComparison().isEqualTo(expectedDetails);

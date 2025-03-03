@@ -46,20 +46,4 @@ public class StudentDetail {
     public StudentDetail() {
         this.studentCourses = new ArrayList<>();
     }
-
-    /**
-     * 学生情報とコース情報を設定するコンストラクタ。
-     *
-     * @param student        学生情報
-     * @param studentCourses 学生が登録しているコース情報のリスト
-     */
-    public StudentDetail(Student student, List<StudentCourse> studentCourses) {
-        this.student = student;  // 学生情報をセット
-        // nullチェックを if-else を使って明示的に記述
-        if (studentCourses == null) {
-            this.studentCourses = new ArrayList<>();
-        } else {
-            this.studentCourses = new ArrayList<>(studentCourses);
-        }
-    }
 }
